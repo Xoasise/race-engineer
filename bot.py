@@ -19,12 +19,16 @@ from wrc_calendar import WRCCalendar
 from sportity_scraper import SportityScraper
 from document_store import DocumentStore
 
-try:
-    from wrc_standings import WRCStandingsScraper
-    STANDINGS_AVAILABLE = True
-except ImportError:
-    STANDINGS_AVAILABLE = False
-    log.warning("wrc_standings.py introuvable — commandes standings désactivées.")
+# ← TEMPORAIREMENT DÉSACTIVÉ à cause du blocage Cloudflare sur rallyjournal.com
+STANDINGS_AVAILABLE = False
+log.warning("WRC standings temporairement désactivés (Cloudflare block).")
+
+# try:
+#     from wrc_standings import WRCStandingsScraper
+#     STANDINGS_AVAILABLE = True
+# except ImportError:
+#     STANDINGS_AVAILABLE = False
+#     log.warning("wrc_standings.py introuvable — commandes standings désactivées.")
 
 try:
     from wrc_results import WRCResultsScraper
