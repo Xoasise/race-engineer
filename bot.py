@@ -23,13 +23,6 @@ from document_store import DocumentStore
 STANDINGS_AVAILABLE = False
 log.warning("WRC standings temporairement désactivés (Cloudflare block).")
 
-# try:
-#     from wrc_standings import WRCStandingsScraper
-#     STANDINGS_AVAILABLE = True
-# except ImportError:
-#     STANDINGS_AVAILABLE = False
-#     log.warning("wrc_standings.py introuvable — commandes standings désactivées.")
-
 try:
     from wrc_results import WRCResultsScraper
     RESULTS_AVAILABLE = True
@@ -48,9 +41,7 @@ store = DocumentStore()
 _GUILD_ID = os.environ.get("DISCORD_GUILD_ID")
 _TEST_GUILD = discord.Object(id=int(_GUILD_ID)) if _GUILD_ID else None
 
-# Channels pour le post automatique
-DRIVERS_CHANNEL_ID = int(os.environ.get("WRC_DRIVERS_CHANNEL_ID", "1468553282845806624"))
-MANU_CHANNEL_ID    = int(os.environ.get("WRC_MANU_CHANNEL_ID",    "1468553305335664731"))
+# Channel pour le post automatique des résultats
 RESULTS_CHANNEL_ID = int(os.environ.get("WRC_RESULTS_CHANNEL_ID", "1468547808725438525"))
 
 
@@ -97,53 +88,6 @@ def _flag(iso2: str) -> str:
     if not iso2 or len(iso2) != 2:
         return ""
     return chr(ord(iso2[0].upper()) + 127397) + chr(ord(iso2[1].upper()) + 127397)
-
-
-def build_drivers_embed(standings: list[dict], rally_name: str = None) -> discord.Embed:
-    medals = {1: "🥇", 2: "🥈", 3: "🥉"}
-    lines = []
-    for entry in standings:
-        pos = entry.get("position", "?")
-        icon = medals.get(pos, f"`{pos:>2}.`")
-        driver = entry.get("driver", "Unknown")
-        points = entry.get("points", 0)
-        flag = _flag(entry.get("nationality", ""))
-        lines.append(f"{icon} {flag} **{driver}** — {points} pts")
-
-    title = "🏎️ Championnat Pilotes WRC 2026"
-    if rally_name:
-        title += f"\n*après {rally_name}*"
-    embed = discord.Embed(
-        title=title,
-        description="\n".join(lines) if lines else "Aucune donnée disponible.",
-        colour=0x1E90FF,
-        timestamp=datetime.now(timezone.utc),
-    )
-    embed.set_footer(text="WRC Bot • wrc.com")
-    return embed
-
-
-def build_manu_embed(standings: list[dict], rally_name: str = None) -> discord.Embed:
-    medals = {1: "🥇", 2: "🥈", 3: "🥉"}
-    lines = []
-    for entry in standings:
-        pos = entry.get("position", "?")
-        icon = medals.get(pos, f"`{pos:>2}.`")
-        team = entry.get("manufacturer", "Unknown")
-        points = entry.get("points", 0)
-        lines.append(f"{icon} **{team}** — {points} pts")
-
-    title = "🏭 Championnat Constructeurs WRC 2026"
-    if rally_name:
-        title += f"\n*après {rally_name}*"
-    embed = discord.Embed(
-        title=title,
-        description="\n".join(lines) if lines else "Aucune donnée disponible.",
-        colour=0xE74C3C,
-        timestamp=datetime.now(timezone.utc),
-    )
-    embed.set_footer(text="WRC Bot • wrc.com")
-    return embed
 
 
 def build_results_embed(results: list[dict], rally_name: str) -> discord.Embed:
@@ -220,24 +164,6 @@ async def fetch_and_post_standings(drivers_ch: discord.TextChannel,
     log.info("Standings posted — %d drivers, %d manufacturers.", len(drivers), len(manufacturers))
 
 
-async def fetch_and_post_results(channel: discord.TextChannel, rally_key: str, rally_name: str):
-    """Récupère et publie le top 10 d'un rallye dans le channel donné."""
-    if not RESULTS_AVAILABLE:
-        log.warning("Results module not available — skipping auto-post.")
-        return
-    scraper = WRCResultsScraper()
-    try:
-        results = await scraper.fetch_rally_results(rally_key, top_n=10)
-    except Exception as exc:
-        log.error("Results fetch failed for %s: %s", rally_key, exc)
-        await channel.send(f"⚠️ Impossible de récupérer les résultats : `{exc}`")
-        return
-
-    embed = build_results_embed(results, rally_name)
-    await channel.send(embed=embed)
-    log.info("Results posted — %d finishers for %s.", len(results), rally_name)
-
-
 # ── Background tasks ───────────────────────────────────────────────────────────
 @tasks.loop(hours=12)
 async def polling_task():
@@ -263,31 +189,19 @@ async def polling_task():
 
 
 @tasks.loop(hours=1)
-async def post_standings_task():
+async def post_results_task():
     """
     Vérifie toutes les heures si un rallye s'est terminé il y a 24-25h.
-    Si oui, publie automatiquement :
-      - Les classements pilotes et constructeurs
-      - Le top 10 du rallye
+    Si oui, publie automatiquement le top 10 du rallye.
     """
     now = datetime.now(timezone.utc)
     for rally in calendar.all_rallies():
         window_start = rally["end"] + timedelta(hours=24)
         window_end   = rally["end"] + timedelta(hours=25)
         if window_start <= now < window_end:
-            log.info("Auto-posting results & standings after %s…", rally["name"])
+            log.info("Auto-posting results after %s…", rally["name"])
             
-            # 1. Post standings dans les channels dédiés
-            if STANDINGS_AVAILABLE:
-                drivers_ch = bot.get_channel(DRIVERS_CHANNEL_ID)
-                manu_ch    = bot.get_channel(MANU_CHANNEL_ID)
-                if drivers_ch and manu_ch:
-                    await fetch_and_post_standings(drivers_ch, manu_ch, rally["name"])
-                else:
-                    log.error("Standings channels not found (IDs: %s / %s).",
-                              DRIVERS_CHANNEL_ID, MANU_CHANNEL_ID)
-            
-            # 2. Post résultats dans le channel dédié
+            # Post résultats dans le channel dédié
             if RESULTS_AVAILABLE:
                 results_ch = bot.get_channel(RESULTS_CHANNEL_ID)
                 if results_ch:
@@ -303,8 +217,8 @@ async def before_polling():
     await bot.wait_until_ready()
 
 
-@post_standings_task.before_loop
-async def before_standings():
+@post_results_task.before_loop
+async def before_results():
     await bot.wait_until_ready()
 
 
@@ -367,7 +281,7 @@ async def wrc_status(interaction: discord.Interaction):
         lines.append(f"📅 **Prochain rallye :** {upcoming['name']} — le {start}")
 
     lines.append(f"\n⏱️ Documents : toutes les **12 h** (pendant les rallyes)")
-    lines.append(f"📊 Classements auto : **24 h** après chaque fin de rallye")
+    lines.append(f"📊 Résultats auto : **24 h** après chaque fin de rallye")
 
     embed = discord.Embed(
         title="📡 WRC Bot — Statut",
@@ -401,36 +315,6 @@ async def wrc_calendar_cmd(interaction: discord.Interaction):
         colour=0xFFD700,
     )
     await interaction.response.send_message(embed=embed)
-
-
-@bot.tree.command(name="wrc_standings",
-                  description="Affiche le Championnat Pilotes WRC 2026.")
-async def wrc_standings_cmd(interaction: discord.Interaction):
-    await interaction.response.defer()
-    if not STANDINGS_AVAILABLE:
-        await interaction.followup.send("⚠️ Module standings non disponible.", ephemeral=True)
-        return
-    try:
-        drivers, _ = await WRCStandingsScraper().fetch_all()
-        await interaction.followup.send(embed=build_drivers_embed(drivers))
-    except Exception as exc:
-        log.error("wrc_standings failed: %s", exc)
-        await interaction.followup.send(f"⚠️ Impossible de récupérer les classements : `{exc}`")
-
-
-@bot.tree.command(name="wrc_manufacturers_standings",
-                  description="Affiche le Championnat Constructeurs WRC 2026.")
-async def wrc_manu_cmd(interaction: discord.Interaction):
-    await interaction.response.defer()
-    if not STANDINGS_AVAILABLE:
-        await interaction.followup.send("⚠️ Module standings non disponible.", ephemeral=True)
-        return
-    try:
-        _, manufacturers = await WRCStandingsScraper().fetch_all()
-        await interaction.followup.send(embed=build_manu_embed(manufacturers))
-    except Exception as exc:
-        log.error("wrc_manufacturers_standings failed: %s", exc)
-        await interaction.followup.send(f"⚠️ Impossible de récupérer les classements : `{exc}`")
 
 
 @bot.tree.command(name="wrc_results",
@@ -488,9 +372,9 @@ async def on_ready():
         polling_task.start()
         log.info("Document polling started (every 12h).")
 
-    if not post_standings_task.is_running():
-        post_standings_task.start()
-        log.info("Standings auto-post started (hourly check, triggers 24h post-rally).")
+    if not post_results_task.is_running():
+        post_results_task.start()
+        log.info("Results auto-post started (hourly check, triggers 24h post-rally).")
 
 
 # ── Entry point ────────────────────────────────────────────────────────────────
