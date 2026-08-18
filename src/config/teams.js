@@ -11,7 +11,7 @@ module.exports = [
   {
     name: 'Aston Martin',
     emoji: '🟢',
-    feedUrl: 'https://www.google.fr/alerts/feeds/12038586848118845542/3428093012651594426',
+    feedUrl: 'https://www.google.com/alerts/feeds/12038586848118845542/15659093061756424937',
     channelId: '1376966530251620352',
   },
   {
@@ -47,13 +47,13 @@ module.exports = [
   {
     name: 'Mercedes',
     emoji: '⭐',
-    feedUrl: 'https://www.google.fr/alerts/feeds/12038586848118845542/16469341420313246327',
+    feedUrl: 'https://www.google.fr/alerts/feeds/12038586848118845542/2792426525194408022',
     channelId: '1376855123543851078',
   },
   {
     name: 'Racing Bulls',
     emoji: '🐂',
-    feedUrl: 'https://www.google.fr/alerts/feeds/12038586848118845542/16469341420313246209',
+    feedUrl: 'https://www.google.fr/alerts/feeds/12038586848118845542/2988373780729345649',
     channelId: '1468402784746475774',
   },
   {
