@@ -1,31 +1,11 @@
 const Parser = require("rss-parser");
-const fs = require("fs");
-const path = require("path");
 const { EmbedBuilder } = require("discord.js");
 const teams = require("../config/teams");
+const { loadSeen, saveSeen, trim } = require("../utils/seenStore");
 
-const parser = new Parser();
-const SEEN_FILE = path.join(__dirname, "..", "data", "seen.json");
-
-// Charge la liste des articles déjà postés (par lien) pour éviter les doublons
-function loadSeen() {
-  try {
-    return JSON.parse(fs.readFileSync(SEEN_FILE, "utf-8"));
-  } catch {
-    return {};
-  }
-}
-
-function saveSeen(seen) {
-  fs.mkdirSync(path.dirname(SEEN_FILE), { recursive: true });
-  fs.writeFileSync(SEEN_FILE, JSON.stringify(seen, null, 2));
-}
-
-// Garde uniquement les 200 derniers liens vus par écurie, pour ne pas
-// laisser grossir le fichier indéfiniment.
-function trim(links) {
-  return links.slice(-200);
-}
+const parser = new Parser({
+  headers: { "User-Agent": "Mozilla/5.0 (compatible; RaceEngineerBot/1.0)" },
+});
 
 // Google Alerts insère des balises HTML (ex: <b>McLaren</b>) autour des
 // mots-clés recherchés. Discord ne les interprète pas, donc on les retire.
