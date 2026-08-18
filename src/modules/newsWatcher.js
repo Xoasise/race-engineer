@@ -1,17 +1,17 @@
-const fs = require('fs');
-const path = require('path');
-const Parser = require('rss-parser');
-const { EmbedBuilder } = require('discord.js');
-const teams = require('../config/teams');
+const Parser = require("rss-parser");
+const fs = require("fs");
+const path = require("path");
+const { EmbedBuilder } = require("discord.js");
+const teams = require("../config/teams");
 
 const parser = new Parser();
-const SEEN_FILE = path.join(__dirname, '..', '..', 'data', 'seen.json');
+const SEEN_FILE = path.join(__dirname, "..", "data", "seen.json");
 
-// Charge la liste des articles déjà postés (par écurie -> tableau de liens vus)
+// Charge la liste des articles déjà postés (par lien) pour éviter les doublons
 function loadSeen() {
   try {
-    return JSON.parse(fs.readFileSync(SEEN_FILE, 'utf8'));
-  } catch (err) {
+    return JSON.parse(fs.readFileSync(SEEN_FILE, "utf-8"));
+  } catch {
     return {};
   }
 }
@@ -21,64 +21,61 @@ function saveSeen(seen) {
   fs.writeFileSync(SEEN_FILE, JSON.stringify(seen, null, 2));
 }
 
-// Limite le nombre de liens gardés en mémoire par écurie pour ne pas
-// faire grossir le fichier indéfiniment.
-const MAX_SEEN_PER_TEAM = 100;
+// Garde uniquement les 200 derniers liens vus par écurie, pour ne pas
+// laisser grossir le fichier indéfiniment.
+function trim(links) {
+  return links.slice(-200);
+}
+
+// Google Alerts insère des balises HTML (ex: <b>McLaren</b>) autour des
+// mots-clés recherchés. Discord ne les interprète pas, donc on les retire.
+function stripHtml(text) {
+  if (!text) return text;
+  return text
+    .replace(/<[^>]*>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&#39;/g, "'")
+    .replace(/&quot;/g, '"')
+    .trim();
+}
 
 async function checkFeeds(client) {
   const seen = loadSeen();
   let hasChanges = false;
 
   for (const team of teams) {
-    if (!seen[team.name]) seen[team.name] = [];
-
-    let feed;
     try {
-      feed = await parser.parseURL(team.feedUrl);
-    } catch (err) {
-      console.error(`[${team.name}] Erreur lors de la récupération du flux RSS :`, err.message);
-      continue;
-    }
+      const feed = await parser.parseURL(team.feedUrl);
+      const knownLinks = seen[team.name] || [];
+      const newItems = feed.items.filter((item) => !knownLinks.includes(item.link));
 
-    const channel = await client.channels.fetch(team.channelId).catch(() => null);
-    if (!channel) {
-      console.error(`[${team.name}] Salon Discord introuvable (ID: ${team.channelId})`);
-      continue;
-    }
+      if (newItems.length === 0) continue;
 
-    // On traite les articles du plus ancien au plus récent pour un ordre
-    // de publication cohérent dans le salon.
-    const items = [...feed.items].reverse();
-
-    for (const item of items) {
-      const uniqueId = item.link || item.guid;
-      if (!uniqueId || seen[team.name].includes(uniqueId)) continue;
-
-      const embed = new EmbedBuilder()
-        .setColor(0xE10600)
-        .setAuthor({ name: `${team.emoji} ${team.name}` })
-        .setTitle(item.title ? item.title.slice(0, 256) : 'Nouvelle actualité')
-        .setURL(item.link || null)
-        .setDescription(
-          item.contentSnippet
-            ? item.contentSnippet.replace(/\s+/g, ' ').slice(0, 300)
-            : null
-        )
-        .setFooter({ text: 'Google Alerts' })
-        .setTimestamp(item.pubDate ? new Date(item.pubDate) : new Date());
-
-      try {
-        await channel.send({ embeds: [embed] });
-        seen[team.name].push(uniqueId);
-        hasChanges = true;
-      } catch (err) {
-        console.error(`[${team.name}] Erreur lors de l'envoi du message :`, err.message);
+      const channel = await client.channels.fetch(team.channelId).catch(() => null);
+      if (!channel) {
+        console.warn(`[${team.name}] Salon introuvable (ID: ${team.channelId})`);
+        continue;
       }
-    }
 
-    // On garde seulement les N derniers liens vus pour cette écurie
-    if (seen[team.name].length > MAX_SEEN_PER_TEAM) {
-      seen[team.name] = seen[team.name].slice(-MAX_SEEN_PER_TEAM);
+      // On poste du plus ancien au plus récent, dans l'ordre chronologique
+      for (const item of newItems.reverse()) {
+        const embed = new EmbedBuilder()
+          .setTitle(stripHtml(item.title)?.slice(0, 256) || "Nouvel article")
+          .setURL(item.link)
+          .setDescription(stripHtml(item.contentSnippet || "").slice(0, 300))
+          .setColor(0xe10600)
+          .setFooter({ text: `${team.name} • Google Alerts` })
+          .setTimestamp(item.pubDate ? new Date(item.pubDate) : new Date());
+
+        await channel.send({ embeds: [embed] });
+      }
+
+      seen[team.name] = trim([...knownLinks, ...newItems.map((i) => i.link)]);
+      hasChanges = true;
+      console.log(`[${team.name}] ${newItems.length} nouvel(le)(s) article(s) posté(s)`);
+    } catch (err) {
+      console.error(`[${team.name}] Erreur lors du fetch du flux :`, err.message);
     }
   }
 
