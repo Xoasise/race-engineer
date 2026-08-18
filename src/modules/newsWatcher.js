@@ -50,6 +50,8 @@ async function checkFeeds(client) {
       const knownLinks = seen[team.name] || [];
       const newItems = feed.items.filter((item) => !knownLinks.includes(item.link));
 
+      console.log(`[${team.name}] Flux lu : ${feed.items.length} article(s) au total, ${newItems.length} nouveau(x)`);
+
       if (newItems.length === 0) continue;
 
       const channel = await client.channels.fetch(team.channelId).catch(() => null);
