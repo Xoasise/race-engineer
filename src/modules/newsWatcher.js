@@ -63,6 +63,7 @@ async function checkFeeds(client) {
       // On poste du plus ancien au plus récent, dans l'ordre chronologique
       for (const item of newItems.reverse()) {
         const embed = new EmbedBuilder()
+          .setAuthor({ name: `${team.emoji} ${team.name}` })
           .setTitle(stripHtml(item.title)?.slice(0, 256) || "Nouvel article")
           .setURL(item.link)
           .setDescription(stripHtml(item.contentSnippet || "").slice(0, 300))
