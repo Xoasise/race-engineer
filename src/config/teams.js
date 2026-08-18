@@ -47,7 +47,7 @@ module.exports = [
   {
     name: 'Mercedes',
     emoji: '⭐',
-    feedUrl: 'https://www.google.fr/alerts/feeds/12038586848118845542/2792426525194408022',
+    feedUrl: 'https://www.google.fr/alerts/feeds/12038586848118845542/13856266538017408713',
     channelId: '1376855123543851078',
   },
   {
