@@ -68,4 +68,22 @@ module.exports = [
     feedUrl: 'https://www.google.fr/alerts/feeds/12038586848118845542/7025228853060014044',
     channelId: '1468402832028729579',
   },
+    {
+    name: 'Hyundai',
+    emoji: '🟠', // à ajuster selon ce que tu veux
+    feedUrl: 'https://www.google.fr/alerts/feeds/12038586848118845542/14088506293604544757',
+    channelId: '1468619813415813201',
+  },
+  {
+    name: 'Toyota',
+    emoji: '🔴',
+    feedUrl: 'https://www.google.fr/alerts/feeds/12038586848118845542/14884398912611785658',
+    channelId: '1468619853538791436',
+  },
+  {
+    name: 'M-Sport Ford',
+    emoji: '🔵',
+    feedUrl: 'https://www.google.fr/alerts/feeds/12038586848118845542/14588407753843629375',
+    channelId: '1468619906055409675',
+  },
 ];
