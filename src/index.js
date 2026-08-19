@@ -1,5 +1,11 @@
 require("dotenv").config();
 const http = require("http");
+// Polyfill : certaines images Node 18 n'exposent pas `File` en global,
+// alors qu'undici (utilisé par discord.js) en a besoin dès son chargement.
+if (typeof globalThis.File === "undefined") {
+  const { File } = require("node:buffer");
+  globalThis.File = File;
+}
 const { Client, GatewayIntentBits } = require("discord.js");
 const cron = require("node-cron");
 const { checkFeeds } = require("./modules/newsWatcher");
