@@ -4,6 +4,7 @@ const { Client, GatewayIntentBits } = require("discord.js");
 const cron = require("node-cron");
 const { checkFeeds } = require("./modules/newsWatcher");
 const { checkNewsFeeds } = require("./modules/rssNewsWatcher");
+const { checkFiaDocs } = require("./modules/fiaDocsWatcher");
 
 // Petit serveur HTTP factice : Railway attend qu'un port soit ouvert
 // pour considérer le service comme "en bonne santé". Il ne sert à rien
@@ -25,6 +26,7 @@ const CHECK_INTERVAL_MINUTES = parseInt(process.env.CHECK_INTERVAL_MINUTES || "1
 async function runAllChecks(client) {
   await checkFeeds(client);
   await checkNewsFeeds(client);
+  await checkFiaDocs(client);
 }
 
 client.once("ready", async () => {
