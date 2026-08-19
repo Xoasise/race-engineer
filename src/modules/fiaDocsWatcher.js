@@ -1,9 +1,11 @@
-const { EmbedBuilder } = require("discord.js");
+const { EmbedBuilder, AttachmentBuilder } = require("discord.js");
 const cheerio = require("cheerio");
 const { loadSeen, saveSeen, trim } = require("../utils/seenStore");
+const { pdfToImages } = require("../utils/pdfToImages");
 const config = require("../config/fiaDocs");
 
 const CATEGORY_KEY = "FIA Documents";
+const MAX_FILES_PER_MESSAGE = 10; // limite Discord
 
 async function fetchHtml(url) {
   const res = await fetch(url, {
@@ -11,6 +13,15 @@ async function fetchHtml(url) {
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.text();
+}
+
+async function fetchPdfBuffer(url) {
+  const res = await fetch(url, {
+    headers: { "User-Agent": "Mozilla/5.0 (compatible; RaceEngineerBot/1.0)" },
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const arrayBuffer = await res.arrayBuffer();
+  return Buffer.from(arrayBuffer);
 }
 
 // Remonte dans l'arborescence pour retrouver le nom du Grand Prix
@@ -38,7 +49,7 @@ function extractDocuments(html) {
     let href = $el.attr("href");
     if (!href) return;
     if (href.startsWith("/")) href = `https://www.fia.com${href}`;
-    if (!href.includes("/system/files/")) return; // ignore d'éventuels autres PDF (menu, footer...)
+    if (!href.includes("/system/files/")) return;
 
     const rawText = $el.text().replace(/\s+/g, " ").trim();
     const publishedMatch = rawText.match(/Published on\s+([0-9.]+\s+[0-9:]+\s*\S*)/i);
@@ -49,6 +60,69 @@ function extractDocuments(html) {
   });
 
   return docs;
+}
+
+function chunk(array, size) {
+  const chunks = [];
+  for (let i = 0; i < array.length; i += size) chunks.push(array.slice(i, i + size));
+  return chunks;
+}
+
+// Envoie un document : un embed d'info (titre + lien) suivi des pages du
+// PDF sous forme d'images, en pièces jointes (par lots de 10 max).
+async function postDocument(channel, doc) {
+  const infoEmbed = new EmbedBuilder()
+    .setAuthor({ name: `🏁 FIA Documents${doc.eventName ? " • " + doc.eventName : ""}` })
+    .setTitle(doc.title.slice(0, 256))
+    .setURL(doc.url)
+    .setColor(0x1e2a45)
+    .setFooter({ text: doc.published ? `Publié le ${doc.published}` : "FIA" });
+
+  let images = [];
+  let totalPages = 0;
+  try {
+    const pdfBuffer = await fetchPdfBuffer(doc.url);
+    const result = await pdfToImages(pdfBuffer, { scale: 2, maxPages: 30 });
+    images = result.images;
+    totalPages = result.totalPages;
+  } catch (err) {
+    console.error(`[FIA Documents] Erreur de conversion PDF pour "${doc.title}" :`, err.message);
+  }
+
+  if (images.length === 0) {
+    // Fallback : pas d'image dispo, on envoie juste l'embed avec le lien.
+    await channel.send({ embeds: [infoEmbed] });
+    return;
+  }
+
+  const batches = chunk(images, MAX_FILES_PER_MESSAGE);
+
+  for (let b = 0; b < batches.length; b++) {
+    const batch = batches[b];
+    const startIndex = b * MAX_FILES_PER_MESSAGE;
+
+    const files = batch.map((imgBuffer, i) =>
+      new AttachmentBuilder(imgBuffer, { name: `page-${startIndex + i + 1}.png` })
+    );
+
+    const embeds = batch.map((_, i) =>
+      new EmbedBuilder()
+        .setURL(doc.url) // même URL sur chaque embed pour les regrouper en galerie
+        .setColor(0x1e2a45)
+        .setImage(`attachment://page-${startIndex + i + 1}.png`)
+    );
+
+    // Le premier lot porte l'embed d'info (titre, lien, footer) en plus des images.
+    const embedsToSend = b === 0 ? [infoEmbed, ...embeds] : embeds;
+
+    await channel.send({ embeds: embedsToSend, files });
+  }
+
+  if (totalPages > images.length) {
+    console.warn(
+      `[FIA Documents] "${doc.title}" a ${totalPages} pages, seules les ${images.length} premières ont été postées`
+    );
+  }
 }
 
 async function checkFiaDocs(client) {
@@ -88,14 +162,11 @@ async function checkFiaDocs(client) {
   }
 
   for (const doc of newDocs.reverse()) {
-    const embed = new EmbedBuilder()
-      .setAuthor({ name: `🏁 FIA Documents${doc.eventName ? " • " + doc.eventName : ""}` })
-      .setTitle(doc.title.slice(0, 256))
-      .setURL(doc.url)
-      .setColor(0x1e2a45)
-      .setFooter({ text: doc.published ? `Publié le ${doc.published}` : "FIA" });
-
-    await channel.send({ embeds: [embed] });
+    try {
+      await postDocument(channel, doc);
+    } catch (err) {
+      console.error(`[FIA Documents] Erreur lors de l'envoi de "${doc.title}" :`, err.message);
+    }
   }
 
   seen[CATEGORY_KEY] = trim([...knownLinks, ...docs.map((d) => d.url)], 300);
