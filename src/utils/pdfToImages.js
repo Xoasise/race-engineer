@@ -39,3 +39,4 @@ async function pdfToImages(pdfBuffer, { scale = 2, maxPages = 10 } = {}) {
 }
 
 module.exports = { pdfToImages };
+module.exports.postDocument = postDocument;
