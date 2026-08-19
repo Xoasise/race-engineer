@@ -1,9 +1,19 @@
-const pdfjsLib = require("pdfjs-dist/legacy/build/pdf.js");
 const { createCanvas } = require("@napi-rs/canvas");
 
+// pdfjs-dist n'est distribué qu'en ESM (.mjs) depuis la v4.
+// On le charge dynamiquement une seule fois puis on le met en cache.
+let pdfjsLibPromise = null;
+function loadPdfjsLib() {
+  if (!pdfjsLibPromise) {
+    pdfjsLibPromise = import("pdfjs-dist/legacy/build/pdf.mjs");
+  }
+  return pdfjsLibPromise;
+}
+
 // Convertit un PDF (Buffer) en tableau de Buffers PNG, une image par page.
-// scale contrôle la résolution : 2 = bonne lisibilité, taille de fichier raisonnable.
 async function pdfToImages(pdfBuffer, { scale = 2, maxPages = 10 } = {}) {
+  const pdfjsLib = await loadPdfjsLib();
+
   const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(pdfBuffer) });
   const doc = await loadingTask.promise;
 
