@@ -175,3 +175,4 @@ async function checkFiaDocs(client) {
 }
 
 module.exports = { checkFiaDocs };
+module.exports.postDocument = postDocument;
