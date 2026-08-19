@@ -10,7 +10,8 @@ const { Client, GatewayIntentBits } = require("discord.js");
 const cron = require("node-cron");
 const { checkFeeds } = require("./modules/newsWatcher");
 const { checkNewsFeeds } = require("./modules/rssNewsWatcher");
-const { checkFiaDocs } = require("./modules/fiaDocsWatcher");
+const { checkFiaDocs, postDocument } = require("./modules/fiaDocsWatcher");
+const fiaDocsConfig = require("./config/fiaDocs");
 
 // Petit serveur HTTP factice : Railway attend qu'un port soit ouvert
 // pour considérer le service comme "en bonne santé". Il ne sert à rien
