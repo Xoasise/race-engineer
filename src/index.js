@@ -39,6 +39,25 @@ async function runAllChecks(client) {
 client.once("ready", async () => {
   console.log(`✅ Race Engineer connecté en tant que ${client.user.tag}`);
 
+   // Test manuel : si TEST_FIA_DOC_URL est défini, poste ce document une fois
+  // au démarrage (sans passer par la logique de dédoublonnage), puis continue
+  // normalement. Pratique pour valider le rendu sans attendre un vrai nouveau doc.
+  if (process.env.TEST_FIA_DOC_URL) {
+    console.log("🧪 Test FIA docs : envoi du document de test...");
+    const channel = await client.channels.fetch(fiaDocsConfig.channelId).catch(() => null);
+    if (channel) {
+      await postDocument(channel, {
+        title: "Test document FIA",
+        published: null,
+        url: process.env.TEST_FIA_DOC_URL,
+        eventName: null,
+      }).catch((err) => console.error("🧪 Erreur test FIA docs :", err.message));
+      console.log("🧪 Test FIA docs : terminé");
+    } else {
+     console.warn("🧪 Test FIA docs : salon introuvable");
+    }
+  }
+
   // Premier check au démarrage
   await runAllChecks(client);
 
