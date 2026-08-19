@@ -7,11 +7,13 @@ if (typeof globalThis.File === "undefined") {
   globalThis.File = File;
 }
 const { Client, GatewayIntentBits } = require("discord.js");
+const { EmbedBuilder } = require("discord.js");
 const cron = require("node-cron");
 const { checkFeeds } = require("./modules/newsWatcher");
 const { checkNewsFeeds } = require("./modules/rssNewsWatcher");
 const { checkFiaDocs, postDocument } = require("./modules/fiaDocsWatcher");
 const fiaDocsConfig = require("./config/fiaDocs");
+const { checkAllFeedsHealth } = require("./utils/feedHealthCheck");
 
 // Petit serveur HTTP factice : Railway attend qu'un port soit ouvert
 // pour considérer le service comme "en bonne santé". Il ne sert à rien
@@ -38,6 +40,30 @@ async function runAllChecks(client) {
 
 client.once("ready", async () => {
   console.log(`✅ Race Engineer connecté en tant que ${client.user.tag}`);
+
+    // Check santé des flux RSS : déclenché uniquement si RUN_FEED_HEALTH_CHECK=true.
+  // Poste un résumé dans HEALTH_CHECK_CHANNEL_ID (ou le salon FIA par défaut)
+  // en plus des logs détaillés dans la console.
+  if (process.env.RUN_FEED_HEALTH_CHECK === "true") {
+    console.log("🩺 Vérification de santé des flux RSS en cours...");
+    const { ok, broken, total } = await checkAllFeedsHealth();
+    console.log(`🩺 ${ok.length}/${total} flux OK, ${broken.length} en erreur`);
+    broken.forEach((b) => console.log(`   ❌ ${b.label} — ${b.url} — ${b.error}`));
+
+    const healthChannelId = process.env.HEALTH_CHECK_CHANNEL_ID || fiaDocsConfig.channelId;
+    const channel = await client.channels.fetch(healthChannelId).catch(() => null);
+    if (channel) {
+      const description = broken.length
+        ? broken.map((b) => `❌ **${b.label}**\n${b.url}\n\`${b.error}\``).join("\n\n").slice(0, 4000)
+        : "✅ Tous les flux répondent correctement.";
+      const embed = new EmbedBuilder()
+        .setTitle(`🩺 Santé des flux RSS — ${ok.length}/${total} OK`)
+        .setDescription(description)
+        .setColor(broken.length ? 0xe10600 : 0x2ecc71);
+      await channel.send({ embeds: [embed] });
+    }
+    console.log("🩺 Vérification terminée");
+  }
 
    // Test manuel : si TEST_FIA_DOC_URL est défini, poste ce document une fois
   // au démarrage (sans passer par la logique de dédoublonnage), puis continue
