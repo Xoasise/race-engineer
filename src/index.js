@@ -30,6 +30,20 @@ const client = new Client({
   intents: [GatewayIntentBits.Guilds],
 });
 
+// Filet de sécurité : un événement 'error' non catché sur le Client (ex:
+// erreur de validation discord.js sur un embed) ou une promesse rejetée
+// non gérée faisait planter tout le process Node avant, provoquant un
+// crash-loop (le conteneur redémarre, retombe sur le même article
+// problématique, replante...). On log désormais ces erreurs au lieu de
+// laisser le process crasher.
+client.on("error", (err) => {
+  console.error("❌ Erreur Discord Client (non fatale) :", err.message);
+});
+
+process.on("unhandledRejection", (err) => {
+  console.error("❌ Promesse rejetée non gérée (non fatale) :", err);
+});
+
 const CHECK_INTERVAL_MINUTES = parseInt(process.env.CHECK_INTERVAL_MINUTES || "15", 10);
 
 async function runAllChecks(client) {
