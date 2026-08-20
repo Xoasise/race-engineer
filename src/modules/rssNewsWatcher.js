@@ -76,7 +76,8 @@ async function checkNewsFeeds(client) {
     // plus ancien au plus récent pour poster dans l'ordre chronologique.
     const uniqueByLink = new Map();
     for (const item of merged) {
-      if (item.link && !uniqueByLink.has(item.link)) uniqueByLink.set(item.link, item);
+      const key = normalizeLink(item.link);
+      if (key && !uniqueByLink.has(key)) uniqueByLink.set(key, { ...item, link: key });
     }
     const sorted = [...uniqueByLink.values()].sort((a, b) => {
       const dateA = a.pubDate ? new Date(a.pubDate).getTime() : 0;
