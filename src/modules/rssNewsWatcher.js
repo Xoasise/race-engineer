@@ -1,7 +1,8 @@
 const Parser = require("rss-parser");
 const { EmbedBuilder } = require("discord.js");
 const categories = require("../config/newsFeeds");
-const { loadSeen, saveSeen, trim } = require("../utils/seenStore");
+const { loadSeen, saveSeen, trim, normalizeLink } = require("../utils/seenStore");
+
 
 // Certains sites (Autosport, Motorsport...) renvoient une erreur 403 sans
 // User-Agent "navigateur". On en met un par défaut pour limiter les échecs.
