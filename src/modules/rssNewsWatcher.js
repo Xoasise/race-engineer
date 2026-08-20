@@ -105,18 +105,32 @@ async function checkNewsFeeds(client) {
 
     for (const item of itemsToPost) {
       const image = extractImage(item);
+
+      // Discord.js refuse une description de chaîne vide (elle doit être
+      // soit non-vide, soit absente). Certains articles (notamment les
+      // items vidéo) n'ont pas de contentSnippet -> stripHtml renvoie "".
+      // Sans cette garde, setDescription("") fait planter tout le process
+      // (unhandled 'error' event sur le Client) et provoque un crash-loop.
+      const description = stripHtml(item.contentSnippet || "").slice(0, 300);
+
       const embed = new EmbedBuilder()
         .setAuthor({ name: `${category.emoji} ${category.name}` })
         .setTitle(stripHtml(item.title)?.slice(0, 256) || "Nouvel article")
         .setURL(item.link)
-        .setDescription(stripHtml(item.contentSnippet || "").slice(0, 300))
         .setColor(0xe10600)
         .setFooter({ text: `Race Engineer • ${category.name}` })
         .setTimestamp(item.pubDate ? new Date(item.pubDate) : new Date());
 
+      if (description) embed.setDescription(description);
       if (image) embed.setImage(image);
 
-      await channel.send({ embeds: [embed] });
+      try {
+        await channel.send({ embeds: [embed] });
+      } catch (err) {
+        // On ne laisse jamais l'échec d'un seul article faire planter
+        // tout le bot : on log et on continue avec les suivants.
+        console.error(`[${category.name}] Erreur lors de l'envoi de "${item.title}" :`, err.message);
+      }
     }
 
     seen[category.name] = trim([...knownLinks, ...newItems.map((i) => i.link)], 300);
