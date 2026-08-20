@@ -22,7 +22,6 @@ module.exports = [
       "https://www.rts.ch/sport/auto/?format=rss/news",
       "https://rss.rtbf.be/article/rss/highlight_rtbf_sport-moteurs-formule-1.xml?source=internal",
       "https://rmcsport.bfmtv.com/rss/auto-moto/f1/",
-      "https://www.lefigaro.fr/rss/figaro_formule-1.xml",
       "https://www.f1actu.com/feed/",
       "https://www.f1-fansite.com/feed/",
     ],
@@ -74,7 +73,6 @@ module.exports = [
     feedUrls: [
       "https://www.motorsport.com/rss/category/rally/news/",
       "https://dirtfish.com/rally/wrc/feed/",
-      "https://en.wheelz.me/category/wrc/feed/",
       "https://www.motorsport.com/rss/category/rally/videos/",
       "https://www.autosport.com/rss/wrc/news/",
       "https://rallypromoter.ca/category/wrc/feed/",
