@@ -66,10 +66,13 @@ async function checkNewsNowSources(client) {
         continue;
       }
 
-      // Premier lancement sur un flux vide = pas de historique -> on évite
-      // de spammer le salon avec tout l'existant d'un coup (comme pour les
-      // flux RSS classiques).
-      const itemsToPost = newItems.slice(-20).reverse();
+      // Premier lancement sur un flux vide = pas d'historique -> on évite de
+      // spammer le salon avec tout l'existant d'un coup. Sur les runs
+      // suivants, on poste TOUT ce qui est nouveau (même si ça dépasse 20) :
+      // sinon les articles au-delà du cap étaient marqués comme "vus" sans
+      // jamais être postés -> perte silencieuse pendant les pics d'actu.
+      const isFirstRun = knownLinks.length === 0;
+      const itemsToPost = (isFirstRun ? newItems.slice(-20) : newItems).reverse();
 
       for (const item of itemsToPost) {
         const embed = new EmbedBuilder()
@@ -89,7 +92,7 @@ async function checkNewsNowSources(client) {
         }
       }
 
-      seen[source.name] = trim([...knownLinks, ...articles.map((a) => a.link)], 300);
+      seen[source.name] = trim([...knownLinks, ...articles.map((a) => a.link)], 500);
       hasChanges = true;
       console.log(`[${source.name}] ${itemsToPost.length} nouvel(le)(s) article(s) posté(s)`);
     } catch (err) {
