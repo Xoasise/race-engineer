@@ -84,4 +84,12 @@ module.exports = [
       "https://rallyjournal.com/feed/",
     ],
   },
+   {
+    name: "Toyota WRC",
+    emoji: "🔴",
+    channelId: "1468619853538791436",
+    feedUrls: [
+      "https://toyota-racing-newsroom.com/rss/wrc.rss",
+    ],
+  },
 ];
