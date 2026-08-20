@@ -61,6 +61,15 @@ async function runAllChecks(client) {
 client.once("ready", async () => {
   console.log(`✅ Race Engineer connecté en tant que ${client.user.tag}`);
 
+  // Envoie toutes les erreurs (console.error) groupées vers un salon
+  // Discord dédié, pour ne pas avoir besoin de surveiller Railway H24.
+  if (process.env.ERROR_LOG_CHANNEL_ID) {
+    initErrorLogger(client, process.env.ERROR_LOG_CHANNEL_ID);
+    console.log("📋 Logging des erreurs activé vers Discord");
+  } else {
+    console.warn("📋 ERROR_LOG_CHANNEL_ID non défini, logging Discord désactivé");
+  }
+
     // Check santé des flux RSS : déclenché uniquement si RUN_FEED_HEALTH_CHECK=true.
   // Poste un résumé dans HEALTH_CHECK_CHANNEL_ID (ou le salon FIA par défaut)
   // en plus des logs détaillés dans la console.
