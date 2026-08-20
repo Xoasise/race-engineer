@@ -135,7 +135,7 @@ async function checkNewsFeeds(client) {
       }
     }
 
-    seen[category.name] = trim([...knownLinks, ...newItems.map((i) => i.link)], 300);
+    seen[category.name] = trim([...knownLinks, ...newItems.map((i) => i.link)], 2000);
     hasChanges = true;
     console.log(`[${category.name}] ${itemsToPost.length} nouvel(le)(s) article(s) posté(s)`);
   }
