@@ -9,7 +9,7 @@ if (typeof globalThis.File === "undefined") {
 const { Client, GatewayIntentBits } = require("discord.js");
 const { EmbedBuilder } = require("discord.js");
 const cron = require("node-cron");
-const { checkFeeds } = require("./modules/newsWatcher");
+const { checkNewsNowSources } = require("./modules/newsNowWatcher");
 const { checkNewsFeeds } = require("./modules/rssNewsWatcher");
 const { checkFiaDocs, postDocument } = require("./modules/fiaDocsWatcher");
 const fiaDocsConfig = require("./config/fiaDocs");
@@ -47,8 +47,11 @@ process.on("unhandledRejection", (err) => {
 const CHECK_INTERVAL_MINUTES = parseInt(process.env.CHECK_INTERVAL_MINUTES || "15", 10);
 
 async function runAllChecks(client) {
-  await checkFeeds(client);
+  // Écuries F1 : scraping NewsNow (remplace les anciens flux Google Alerts).
+  await checkNewsNowSources(client);
+  // Catégories généralistes (F1 EN/FR, WRC EN/FR) : RSS classique, inchangé.
   await checkNewsFeeds(client);
+  // Documents FIA : scraping + rendu PDF en images, inchangé.
   await checkFiaDocs(client);
 }
 
