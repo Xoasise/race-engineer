@@ -117,7 +117,7 @@ async function sendReminder(client, session) {
   .setColor(0xe10600);
 
   try {
-    await channel.send({ embeds: [embed] });
+    await channel.send({ content: `<@&1540296364817260554>`, embeds: [embed] });
     console.log(`[F1 Sessions] Rappel envoyé : ${session.name}`);
   } catch (err) {
     console.error(`[F1 Sessions] Erreur lors de l'envoi du rappel "${session.name}" :`, err.message);
