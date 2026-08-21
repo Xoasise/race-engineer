@@ -82,12 +82,29 @@ module.exports = [
       "https://rallyjournal.com/feed/",
     ],
   },
-   {
+      {
     name: "Toyota WRC",
     emoji: "🔴",
     channelId: "1468619853538791436",
     feedUrls: [
       "https://toyota-racing-newsroom.com/rss/wrc.rss",
+      "https://politepaul.com/fd/oMmn3ed9e34R.xml",
+    ],
+  },
+  {
+    name: "Hyundai WRC",
+    emoji: "🔵",
+    channelId: "1468619813415813201",
+    feedUrls: [
+      "https://politepaul.com/fd/EkrHAwd6VycR.xml",
+    ],
+  },
+  {
+    name: "M-Sport WRC",
+    emoji: "⚪",
+    channelId: "1468619906055409675",
+    feedUrls: [
+      "https://politepaul.com/fd/yjYQuN3EpZgw.xml",
     ],
   },
 ];
