@@ -1,7 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 
-const CALENDAR_FILE = path.join(__dirname, "..", "data", "f1Calendar2026.json");
+const CALENDAR_FILE = path.join(__dirname, "..", "config", "f1Calendar2026.json");
 
 // Charge le fichier JSON et convertit les dates en objets Date.
 function loadCalendar() {
