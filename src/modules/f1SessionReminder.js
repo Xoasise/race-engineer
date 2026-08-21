@@ -103,10 +103,18 @@ async function sendReminder(client, session) {
   const raceName = state.currentRound?.raceName || "Grand Prix";
 
   const embed = new EmbedBuilder()
-    .setAuthor({ name: `🏎️ ${raceName}` })
-    .setTitle(`⏱️ ${session.name} commence dans ${config.notifyLeadMinutes} minutes`)
-    .setDescription(`Départ <t:${unixSeconds}:t> (<t:${unixSeconds}:R>)`)
-    .setColor(0xe10600);
+  .setAuthor({ name: `🏎️ ${raceName}` })
+  .addFields(
+    { 
+      name: `🇬🇧 ${session.name} starts in ${config.notifyLeadMinutes} minutes`, 
+      value: `Start <t:${unixSeconds}:t> (<t:${unixSeconds}:R>)` 
+    },
+    { 
+      name: `🇫🇷 ${session.name} commence dans ${config.notifyLeadMinutes} minutes`, 
+      value: `Départ <t:${unixSeconds}:t> (<t:${unixSeconds}:R>)` 
+    }
+  )
+  .setColor(0xe10600);
 
   try {
     await channel.send({ embeds: [embed] });
