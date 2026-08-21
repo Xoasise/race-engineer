@@ -14,7 +14,6 @@ const { checkNewsFeeds } = require("./modules/rssNewsWatcher");
 const { checkFiaDocs, postDocument } = require("./modules/fiaDocsWatcher");
 const fiaDocsConfig = require("./config/fiaDocs");
 const { checkAllFeedsHealth } = require("./utils/feedHealthCheck");
-const { checkMSport } = require("./modules/mSportWatcher");
 const { checkF1SessionReminders, startReminderLoop } = require("./modules/f1SessionReminder");
 const { initErrorLogger } = require("./utils/discordErrorLogger");
 
@@ -53,7 +52,6 @@ async function runAllChecks(client) {
   // Écuries F1 : scraping NewsNow (remplace les anciens flux Google Alerts).
   await checkNewsNowSources(client);
   // Catégories généralistes (F1 EN/FR, WRC EN/FR) : RSS classique, inchangé.
-  await checkMSport(client);
   await checkNewsFeeds(client);
   // Documents FIA : scraping + rendu PDF en images, inchangé.
   await checkFiaDocs(client);
