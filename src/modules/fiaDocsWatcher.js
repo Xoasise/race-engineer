@@ -6,6 +6,7 @@ const config = require("../config/fiaDocs");
 
 const CATEGORY_KEY = "FIA Documents";
 const MAX_FILES_PER_MESSAGE = 10; // limite Discord
+const CLASSIFICATION_CHANNEL_ID = "725345981410836490"; // salon dédié aux classements
 
 async function fetchHtml(url) {
   const res = await fetch(url, {
