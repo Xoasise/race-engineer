@@ -95,6 +95,11 @@ async function postDocument(channel, doc) {
     return;
   }
 
+  // L'embed d'info part dans son propre message : ça évite de dépasser la
+  // limite Discord de 10 embeds/message quand le premier lot d'images est
+  // déjà plein (10 images + 1 info = 11, refusé par Discord).
+  await channel.send({ embeds: [infoEmbed] });
+
   const batches = chunk(images, MAX_FILES_PER_MESSAGE);
 
   for (let b = 0; b < batches.length; b++) {
@@ -112,10 +117,7 @@ async function postDocument(channel, doc) {
         .setImage(`attachment://page-${startIndex + i + 1}.png`)
     );
 
-    // Le premier lot porte l'embed d'info (titre, lien, footer) en plus des images.
-    const embedsToSend = b === 0 ? [infoEmbed, ...embeds] : embeds;
-
-    await channel.send({ embeds: embedsToSend, files });
+    await channel.send({ embeds, files });
   }
 
   if (totalPages > images.length) {
