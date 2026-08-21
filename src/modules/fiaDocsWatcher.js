@@ -163,17 +163,22 @@ async function checkFiaDocs(client) {
     return;
   }
 
+    const failedUrls = new Set();
   for (const doc of newDocs.reverse()) {
     try {
       await postDocument(channel, doc);
     } catch (err) {
       console.error(`[FIA Documents] Erreur lors de l'envoi de "${doc.title}" :`, err.message);
+      failedUrls.add(doc.url);
     }
   }
 
-  seen[CATEGORY_KEY] = trim([...knownLinks, ...docs.map((d) => d.url)], 300);
+  // On ne marque pas comme "vus" les docs dont l'envoi a échoué, pour
+  // qu'ils soient retentés au prochain check plutôt que perdus.
+  const successfulUrls = docs.map((d) => d.url).filter((url) => !failedUrls.has(url));
+  seen[CATEGORY_KEY] = trim([...knownLinks, ...successfulUrls], 300);
   saveSeen(seen);
-  console.log(`[FIA Documents] ${newDocs.length} nouveau(x) document(s) posté(s)`);
+  console.log(`[FIA Documents] ${newDocs.length - failedUrls.size} nouveau(x) document(s) posté(s)`);
 }
 
 module.exports = { checkFiaDocs };
