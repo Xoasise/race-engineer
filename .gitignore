@@ -1,4 +1,4 @@
 node_modules/
 .env
 src/data/seen.json
-
+src/data/f1SessionReminders.json
