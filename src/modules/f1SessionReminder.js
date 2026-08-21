@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const { EmbedBuilder } = require("discord.js");
 const config = require("../config/f1SessionReminders");
-const { fetchSeasonRounds, fetchGpSessions } = require("../utils/f1CalendarScraper");
+const { getRounds } = require("../utils/f1CalendarLocal");
 
 const STATE_FILE = path.join(__dirname, "..", "data", "f1SessionReminders.json");
 
@@ -43,15 +43,13 @@ function addDays(date, days) {
 async function checkF1SessionReminders(client) {
   let rounds;
   try {
-    rounds = await fetchSeasonRounds(config.calendarUrl, config.seasonYear);
+    rounds = getRounds();
   } catch (err) {
-    console.error("[F1 Sessions] Erreur lors du fetch du calendrier :", err.message);
+    console.error("[F1 Sessions] Erreur lors de la lecture du calendrier local :", err.message);
     return;
   }
 
   const now = new Date();
-  // Premier round dont le week-end (+1 jour de marge) n'est pas encore
-  // terminé : c'est soit le round en cours, soit le prochain.
   const upcoming = rounds.find((r) => now < addDays(r.weekendEnd, 1));
 
   if (!upcoming) {
@@ -60,36 +58,22 @@ async function checkF1SessionReminders(client) {
   }
 
   if (state.currentRound?.slug === upcoming.slug) {
-    // Déjà en cache pour ce round, rien à refaire.
     return;
   }
 
-  console.log(`[F1 Sessions] Nouveau round détecté : ${upcoming.raceName} (${upcoming.slug})`);
-
-  let sessions;
-  try {
-    sessions = await fetchGpSessions(upcoming.url);
-  } catch (err) {
-    console.error(`[F1 Sessions] Erreur lors du fetch des sessions pour ${upcoming.slug} :`, err.message);
-    return;
-  }
-
-  if (sessions.length === 0) {
-    console.warn(`[F1 Sessions] Aucune session trouvée sur la page de ${upcoming.slug}, nouvelle tentative au prochain check`);
-    return;
-  }
+  console.log(`[F1 Sessions] Nouveau round détecté : ${upcoming.raceName}`);
 
   state.currentRound = {
     slug: upcoming.slug,
     raceName: upcoming.raceName,
-    sessions: sessions.map((s) => ({
+    sessions: upcoming.sessions.map((s) => ({
       name: s.name,
       startDate: s.startDate,
       notified: false,
     })),
   };
   saveState();
-  console.log(`[F1 Sessions] ${sessions.length} session(s) programmée(s) pour ${upcoming.raceName}`);
+  console.log(`[F1 Sessions] ${upcoming.sessions.length} session(s) programmée(s) pour ${upcoming.raceName}`);
 }
 
 async function sendReminder(client, session) {
