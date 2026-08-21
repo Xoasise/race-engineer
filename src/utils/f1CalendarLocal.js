@@ -1,0 +1,44 @@
+const fs = require("fs");
+const path = require("path");
+
+const CALENDAR_FILE = path.join(__dirname, "..", "data", "f1Calendar2026.json");
+
+// Charge le fichier JSON et convertit les dates en objets Date.
+function loadCalendar() {
+  const raw = JSON.parse(fs.readFileSync(CALENDAR_FILE, "utf-8"));
+  return raw.map((s) => ({
+    gp: s.gp,
+    session: s.session,
+    startDate: new Date(s.debut),
+    endDate: new Date(s.fin),
+  }));
+}
+
+// Regroupe les sessions par Grand Prix ("round"). Le nom du GP sert
+// d'identifiant unique (équivalent du "slug" de l'ancien scraper), et les
+// sessions sont déjà présentes ici : plus besoin d'un 2e fetch par round.
+function getRounds() {
+  const all = loadCalendar();
+  const byGp = new Map();
+
+  for (const s of all) {
+    if (!byGp.has(s.gp)) byGp.set(s.gp, []);
+    byGp.get(s.gp).push(s);
+  }
+
+  const rounds = [];
+  for (const [gp, sessions] of byGp) {
+    sessions.sort((a, b) => a.startDate - b.startDate);
+    rounds.push({
+      slug: gp,
+      raceName: gp,
+      weekendStart: sessions[0].startDate,
+      weekendEnd: sessions[sessions.length - 1].endDate,
+      sessions: sessions.map((s) => ({ name: s.session, startDate: s.startDate })),
+    });
+  }
+
+  return rounds.sort((a, b) => a.weekendStart - b.weekendStart);
+}
+
+module.exports = { getRounds };
