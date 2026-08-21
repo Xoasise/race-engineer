@@ -164,10 +164,18 @@ async function checkFiaDocs(client) {
     return;
   }
 
+  // Salon dédié aux documents de classement
+const classificationChannel = await client.channels.fetch(CLASSIFICATION_CHANNEL_ID).catch(() => null);
+if (!classificationChannel) {
+  console.warn(`[FIA Documents] Salon "classification" introuvable (ID: ${CLASSIFICATION_CHANNEL_ID})`);
+}
+
     const failedUrls = new Set();
   for (const doc of newDocs.reverse()) {
-    try {
-      await postDocument(channel, doc);
+  try {
+    const isClassification = /classification/i.test(doc.title);
+    const targetChannel = isClassification && classificationChannel ? classificationChannel : channel;
+    await postDocument(targetChannel, doc);
     } catch (err) {
       console.error(`[FIA Documents] Erreur lors de l'envoi de "${doc.title}" :`, err.message);
       failedUrls.add(doc.url);
