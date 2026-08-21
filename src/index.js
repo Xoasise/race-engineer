@@ -15,6 +15,7 @@ const { checkFiaDocs, postDocument } = require("./modules/fiaDocsWatcher");
 const fiaDocsConfig = require("./config/fiaDocs");
 const { checkAllFeedsHealth } = require("./utils/feedHealthCheck");
 const { checkMSport } = require("./modules/mSportWatcher");
+const { checkF1SessionReminders, startReminderLoop } = require("./modules/f1SessionReminder");
 const { initErrorLogger } = require("./utils/discordErrorLogger");
 
 // Petit serveur HTTP factice : Railway attend qu'un port soit ouvert
@@ -56,6 +57,10 @@ async function runAllChecks(client) {
   await checkNewsFeeds(client);
   // Documents FIA : scraping + rendu PDF en images, inchangé.
   await checkFiaDocs(client);
+  // Rappels de sessions F1 : détecte le round en cours/à venir et met en
+  // cache ses horaires. L'envoi des rappels lui-même se fait dans une
+  // boucle séparée (startReminderLoop), pas ici.
+  await checkF1SessionReminders(client);
 }
 
 client.once("ready", async () => {
@@ -112,6 +117,12 @@ client.once("ready", async () => {
      console.warn("🧪 Test FIA docs : salon introuvable");
     }
   }
+
+  // Boucle légère (30s par défaut, aucune requête réseau) qui déclenche les
+  // rappels de session F1 au bon moment, à partir du cache posé par
+  // checkF1SessionReminders. Démarrée une seule fois, indépendamment du
+  // cron des autres watchers.
+  startReminderLoop(client);
 
   // Premier check au démarrage
   await runAllChecks(client);
