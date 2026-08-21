@@ -7,6 +7,7 @@ const config = require("../config/fiaDocs");
 const CATEGORY_KEY = "FIA Documents";
 const MAX_FILES_PER_MESSAGE = 10; // limite Discord
 const CLASSIFICATION_CHANNEL_ID = "725345981410836490"; // salon dédié aux classements
+const STANDINGS_CHANNEL_ID = "1376589535495983207"; // salon dédié au championnat
 
 async function fetchHtml(url) {
   const res = await fetch(url, {
@@ -170,11 +171,21 @@ if (!classificationChannel) {
   console.warn(`[FIA Documents] Salon "classification" introuvable (ID: ${CLASSIFICATION_CHANNEL_ID})`);
 }
 
+const standingsChannel = await client.channels.fetch(STANDINGS_CHANNEL_ID).catch(() => null);
+if (!standingsChannel) {
+  console.warn(`[FIA Documents] Salon "standings" introuvable (ID: ${STANDINGS_CHANNEL_ID})`);
+}
+
     const failedUrls = new Set();
   for (const doc of newDocs.reverse()) {
   try {
     const isClassification = /classification/i.test(doc.title);
-    const targetChannel = isClassification && classificationChannel ? classificationChannel : channel;
+    const isChampionship = /championship/i.test(doc.title);
+    const targetChannel = isChampionship && standingsChannel
+      ? standingsChannel
+      : isClassification && classificationChannel
+        ? classificationChannel
+        : channel;
     await postDocument(targetChannel, doc);
     } catch (err) {
       console.error(`[FIA Documents] Erreur lors de l'envoi de "${doc.title}" :`, err.message);
