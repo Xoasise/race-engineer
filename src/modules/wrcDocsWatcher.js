@@ -7,6 +7,8 @@ const sportityUrls = require("../config/wrcSportityUrls");
 const config = require("../config/wrcDocs");
 
 const MAX_FILES_PER_MESSAGE = 10; // limite Discord
+const RESULTS_CHANNEL_ID = "1468547808725438525"; // salon dédié aux classements ("Classification")
+const STANDINGS_CHANNEL_ID = "1468553282845806624"; // salon dédié au championnat ("Championship")
 
 async function fetchHtml(url) {
   const res = await fetch(url, {
@@ -188,10 +190,29 @@ async function checkWrcDocs(client) {
     return;
   }
 
+  // Salon dédié aux documents de classement
+  const resultsChannel = await client.channels.fetch(RESULTS_CHANNEL_ID).catch(() => null);
+  if (!resultsChannel) {
+    console.warn(`[WRC Documents] Salon "results" introuvable (ID: ${RESULTS_CHANNEL_ID})`);
+  }
+
+  // Salon dédié au championnat
+  const standingsChannel = await client.channels.fetch(STANDINGS_CHANNEL_ID).catch(() => null);
+  if (!standingsChannel) {
+    console.warn(`[WRC Documents] Salon "standings" introuvable (ID: ${STANDINGS_CHANNEL_ID})`);
+  }
+
   const failedUrls = new Set();
   for (const doc of newDocs.reverse()) {
     try {
-      await postDocument(channel, doc, rally.rally);
+      const isClassification = /classification/i.test(doc.title);
+      const isChampionship = /championship/i.test(doc.title);
+      const targetChannel = isChampionship && standingsChannel
+        ? standingsChannel
+        : isClassification && resultsChannel
+          ? resultsChannel
+          : channel;
+      await postDocument(targetChannel, doc, rally.rally);
     } catch (err) {
       console.error(`[WRC Documents] Erreur lors de l'envoi de "${doc.title}" :`, err.message);
       failedUrls.add(doc.url);
