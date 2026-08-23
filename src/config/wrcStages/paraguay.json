@@ -1,0 +1,170 @@
+[
+  {
+    "numero": "Shakedown 1",
+    "nom": "Shakedown (Carmen del Paraná)",
+    "distance_km": 5.6,
+    "heure": "11:01",
+    "date": "2026-08-27"
+  },
+  {
+    "numero": "Shakedown 2",
+    "nom": "Shakedown (Carmen del Paraná)",
+    "distance_km": 5.6,
+    "heure": "12:30",
+    "date": "2026-08-27"
+  },
+  {
+    "numero": "SS 1",
+    "nom": "Cambyreta 1",
+    "distance_km": 24.65,
+    "heure": "09:03",
+    "date": "2026-08-28"
+  },
+  {
+    "numero": "SS 2",
+    "nom": "Nueva Alborada 1",
+    "distance_km": 15.66,
+    "heure": "09:56",
+    "date": "2026-08-28"
+  },
+  {
+    "numero": "SS 3",
+    "nom": "Yerbateras 1",
+    "distance_km": 34.08,
+    "heure": "10:49",
+    "date": "2026-08-28"
+  },
+  {
+    "numero": "SSS 4",
+    "nom": "Autódromo Alfredo Scheid 1",
+    "distance_km": 2.5,
+    "heure": "11:50",
+    "date": "2026-08-28"
+  },
+  {
+    "numero": "SS 5",
+    "nom": "Cambyreta 2",
+    "distance_km": 24.65,
+    "heure": "14:19",
+    "date": "2026-08-28"
+  },
+  {
+    "numero": "SS 6",
+    "nom": "Nueva Alborada 2",
+    "distance_km": 15.66,
+    "heure": "15:12",
+    "date": "2026-08-28"
+  },
+  {
+    "numero": "SS 7",
+    "nom": "Yerbateras 2",
+    "distance_km": 34.08,
+    "heure": "16:05",
+    "date": "2026-08-28"
+  },
+  {
+    "numero": "SSS 8",
+    "nom": "Autódromo Alfredo Scheid 2",
+    "distance_km": 2.5,
+    "heure": "17:18",
+    "date": "2026-08-28"
+  },
+  {
+    "numero": "SS 9",
+    "nom": "Bella Vista 1",
+    "distance_km": 21.15,
+    "heure": "08:19",
+    "date": "2026-08-29"
+  },
+  {
+    "numero": "SS 10",
+    "nom": "Bella Vista Sur 1",
+    "distance_km": 10.95,
+    "heure": "09:12",
+    "date": "2026-08-29"
+  },
+  {
+    "numero": "SS 11",
+    "nom": "Hohenau 1",
+    "distance_km": 19.4,
+    "heure": "10:05",
+    "date": "2026-08-29"
+  },
+  {
+    "numero": "SS 12",
+    "nom": "Trinidad 1",
+    "distance_km": 14.82,
+    "heure": "11:02",
+    "date": "2026-08-29"
+  },
+  {
+    "numero": "SS 13",
+    "nom": "Bella Vista 2",
+    "distance_km": 21.15,
+    "heure": "14:16",
+    "date": "2026-08-29"
+  },
+  {
+    "numero": "SS 14",
+    "nom": "Bella Vista Sur 2",
+    "distance_km": 10.95,
+    "heure": "15:09",
+    "date": "2026-08-29"
+  },
+  {
+    "numero": "SS 15",
+    "nom": "Hohenau 2",
+    "distance_km": 19.4,
+    "heure": "16:05",
+    "date": "2026-08-29"
+  },
+  {
+    "numero": "SS 16",
+    "nom": "Trinidad 2",
+    "distance_km": 14.82,
+    "heure": "17:02",
+    "date": "2026-08-29"
+  },
+  {
+    "numero": "SSS 17",
+    "nom": "Encarnación Costanera",
+    "distance_km": 3.1,
+    "heure": "18:05",
+    "date": "2026-08-29"
+  },
+  {
+    "numero": "SS 18",
+    "nom": "Encarnación 1",
+    "distance_km": 10.21,
+    "heure": "07:05",
+    "date": "2026-08-30"
+  },
+  {
+    "numero": "SS 19",
+    "nom": "Artigas 1",
+    "distance_km": 19.63,
+    "heure": "08:38",
+    "date": "2026-08-30"
+  },
+  {
+    "numero": "SS 20",
+    "nom": "Artigas Oeste",
+    "distance_km": 8.44,
+    "heure": "10:51",
+    "date": "2026-08-30"
+  },
+  {
+    "numero": "SS 21",
+    "nom": "Artigas 2",
+    "distance_km": 19.63,
+    "heure": "11:43",
+    "date": "2026-08-30"
+  },
+  {
+    "numero": "SS 22",
+    "nom": "Encarnación 2 [Power Stage]",
+    "distance_km": 10.21,
+    "heure": "14:15",
+    "date": "2026-08-30"
+  }
+]
