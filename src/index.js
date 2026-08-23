@@ -17,6 +17,7 @@ const { checkAllFeedsHealth } = require("./utils/feedHealthCheck");
 const { checkF1SessionReminders, startReminderLoop } = require("./modules/f1SessionReminder");
 const { initErrorLogger } = require("./utils/discordErrorLogger");
 const { checkWrcDocs } = require("./modules/wrcDocsWatcher");
+const { checkWrcStageReminders, startStageReminderLoop } = require("./modules/wrcStageReminder");
 
 // Petit serveur HTTP factice : Railway attend qu'un port soit ouvert
 // pour considérer le service comme "en bonne santé". Il ne sert à rien
@@ -63,6 +64,11 @@ async function runAllChecks(client) {
   // cache ses horaires. L'envoi des rappels lui-même se fait dans une
   // boucle séparée (startReminderLoop), pas ici.
   await checkF1SessionReminders(client);
+  // Rappels de spéciales WRC : aucune requête réseau (planning local),
+  // détecte juste le rallye en cours et met en cache son planning. Comme
+  // pour la F1, l'envoi des rappels se fait dans une boucle séparée
+  // (startStageReminderLoop).
+  await checkWrcStageReminders(client);
 }
 
 client.once("ready", async () => {
@@ -125,6 +131,10 @@ client.once("ready", async () => {
   // checkF1SessionReminders. Démarrée une seule fois, indépendamment du
   // cron des autres watchers.
   startReminderLoop(client);
+
+  // Idem pour les rappels de spéciales WRC, à partir du cache posé par
+  // checkWrcStageReminders.
+  startStageReminderLoop(client);
 
   // Premier check au démarrage
   await runAllChecks(client);
