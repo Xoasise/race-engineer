@@ -16,6 +16,7 @@ const fiaDocsConfig = require("./config/fiaDocs");
 const { checkAllFeedsHealth } = require("./utils/feedHealthCheck");
 const { checkF1SessionReminders, startReminderLoop } = require("./modules/f1SessionReminder");
 const { initErrorLogger } = require("./utils/discordErrorLogger");
+const { checkWrcDocs } = require("./modules/wrcDocsWatcher");
 
 // Petit serveur HTTP factice : Railway attend qu'un port soit ouvert
 // pour considérer le service comme "en bonne santé". Il ne sert à rien
@@ -55,6 +56,9 @@ async function runAllChecks(client) {
   await checkNewsFeeds(client);
   // Documents FIA : scraping + rendu PDF en images, inchangé.
   await checkFiaDocs(client);
+  // Documents WRC (Sportity) : ne fait rien si aucun week-end de rallye
+  // n'est en cours, sinon poste/actualise les documents du rallye courant.
+  await checkWrcDocs(client);
   // Rappels de sessions F1 : détecte le round en cours/à venir et met en
   // cache ses horaires. L'envoi des rappels lui-même se fait dans une
   // boucle séparée (startReminderLoop), pas ici.
