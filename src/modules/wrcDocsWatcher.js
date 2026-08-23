@@ -1,0 +1,212 @@
+const { EmbedBuilder, AttachmentBuilder } = require("discord.js");
+const cheerio = require("cheerio");
+const { loadSeen, saveSeen, trim } = require("../utils/seenStore");
+const { pdfToImages } = require("../utils/pdfToImages");
+const { getCurrentRally } = require("../utils/wrcCalendarLocal");
+const sportityUrls = require("../config/wrcSportityUrls");
+const config = require("../config/wrcDocs");
+
+const MAX_FILES_PER_MESSAGE = 10; // limite Discord
+
+async function fetchHtml(url) {
+  const res = await fetch(url, {
+    headers: { "User-Agent": "Mozilla/5.0 (compatible; RaceEngineerBot/1.0)" },
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.text();
+}
+
+async function fetchPdfBuffer(url) {
+  const res = await fetch(url, {
+    headers: { "User-Agent": "Mozilla/5.0 (compatible; RaceEngineerBot/1.0)" },
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const arrayBuffer = await res.arrayBuffer();
+  return Buffer.from(arrayBuffer);
+}
+
+// Une page Sportity est organisée en sections (Bulletins, Stewards
+// Documents, COC Documents, Entry and Start Lists, Results...), chacune
+// précédée d'un titre. On parcourt titres et liens PDF dans l'ordre du
+// document (cheerio renvoie les éléments d'un sélecteur multiple dans
+// l'ordre du DOM) pour rattacher chaque document à la section qui le
+// précède, sans dépendre d'une structure imbriquée précise.
+function extractDocuments(html) {
+  const $ = cheerio.load(html);
+  const nodes = $("h1, h2, h3, h4, h5, h6, a").toArray();
+
+  let currentCategory = null;
+  const docs = [];
+
+  for (const el of nodes) {
+    const $el = $(el);
+    const tag = (el.tagName || "").toLowerCase();
+
+    if (tag !== "a") {
+      const heading = $el.text().replace(/\s+/g, " ").trim();
+      if (heading) currentCategory = heading;
+      continue;
+    }
+
+    const href = $el.attr("href");
+    if (!href) continue;
+    // Seuls les liens vers le CDN de documents Sportity nous intéressent
+    // (le reste est de la navigation interne à la page : ancres de section,
+    // logo, etc.).
+    if (!/app-cdn\.sportity\.com/i.test(href) || !/\.pdf(\?|#|$)/i.test(href)) continue;
+
+    // Le texte du lien contient le titre suivi de la date de publication,
+    // ex: "Bulletin 1 19 Aug 2026 14:15 -03".
+    const rawText = $el.text().replace(/\s+/g, " ").trim();
+    const match = rawText.match(
+      /^(.*?)\s+(\d{1,2}\s+[A-Za-z]{3,9}\s+\d{4}\s+\d{2}:\d{2}\s*[+-]\d{1,2}(?::?\d{2})?)$/
+    );
+    const title = (match ? match[1] : rawText).trim() || "Document WRC";
+    const published = match ? match[2].trim() : null;
+
+    docs.push({ title, published, url: href, category: currentCategory });
+  }
+
+  return docs;
+}
+
+function chunk(array, size) {
+  const chunks = [];
+  for (let i = 0; i < array.length; i += size) chunks.push(array.slice(i, i + size));
+  return chunks;
+}
+
+// Envoie un document : un embed d'info (titre + lien) suivi des pages du
+// PDF sous forme d'images, en pièces jointes (par lots de 10 max). Même
+// logique que postDocument() dans fiaDocsWatcher.js.
+async function postDocument(channel, doc, rallyName) {
+  const authorParts = ["🏁 WRC Documents"];
+  if (rallyName) authorParts.push(rallyName.replace(/^\p{Extended_Pictographic}+\s*/u, "").trim());
+  if (doc.category) authorParts.push(doc.category);
+
+  const infoEmbed = new EmbedBuilder()
+    .setAuthor({ name: authorParts.join(" • ").slice(0, 256) })
+    .setTitle(doc.title.slice(0, 256))
+    .setURL(doc.url)
+    .setColor(0x1e2a45)
+    .setFooter({ text: doc.published ? `Publié le ${doc.published}` : "Sportity" });
+
+  let images = [];
+  let totalPages = 0;
+  try {
+    const pdfBuffer = await fetchPdfBuffer(doc.url);
+    const result = await pdfToImages(pdfBuffer, { scale: 2, maxPages: 30 });
+    images = result.images;
+    totalPages = result.totalPages;
+  } catch (err) {
+    console.error(`[WRC Documents] Erreur de conversion PDF pour "${doc.title}" :`, err.message);
+  }
+
+  if (images.length === 0) {
+    // Fallback : pas d'image dispo, on envoie juste l'embed avec le lien.
+    await channel.send({ embeds: [infoEmbed] });
+    return;
+  }
+
+  // L'embed d'info part dans son propre message, comme pour la FIA : ça
+  // évite de dépasser la limite Discord de 10 embeds/message quand le
+  // premier lot d'images est déjà plein.
+  await channel.send({ embeds: [infoEmbed] });
+
+  const batches = chunk(images, MAX_FILES_PER_MESSAGE);
+
+  for (let b = 0; b < batches.length; b++) {
+    const batch = batches[b];
+    const startIndex = b * MAX_FILES_PER_MESSAGE;
+
+    const files = batch.map((imgBuffer, i) =>
+      new AttachmentBuilder(imgBuffer, { name: `page-${startIndex + i + 1}.png` })
+    );
+
+    const embeds = batch.map((_, i) =>
+      new EmbedBuilder()
+        .setURL(doc.url) // même URL sur chaque embed pour les regrouper en galerie
+        .setColor(0x1e2a45)
+        .setImage(`attachment://page-${startIndex + i + 1}.png`)
+    );
+
+    await channel.send({ embeds, files });
+  }
+
+  if (totalPages > images.length) {
+    console.warn(
+      `[WRC Documents] "${doc.title}" a ${totalPages} pages, seules les ${images.length} premières ont été postées`
+    );
+  }
+}
+
+async function checkWrcDocs(client) {
+  const rally = getCurrentRally();
+
+  if (!rally) {
+    // Pas de week-end de rallye en cours : on ne fait aucune requête
+    // réseau, on attend simplement le prochain déclenchement.
+    return;
+  }
+
+  const sportityUrl = sportityUrls[rally.rally];
+  if (!sportityUrl) {
+    console.warn(
+      `[WRC Documents] Rallye en cours "${rally.rally}" mais aucune URL Sportity configurée dans src/config/wrcSportityUrls.js`
+    );
+    return;
+  }
+
+  const seen = loadSeen();
+  const seenKey = `WRC Documents - ${rally.rally}`;
+  const knownLinks = seen[seenKey] || [];
+
+  let html;
+  try {
+    html = await fetchHtml(sportityUrl);
+  } catch (err) {
+    console.error(`[WRC Documents] Erreur lors du fetch de la page Sportity (${rally.rally}) :`, err.message);
+    return;
+  }
+
+  let docs;
+  try {
+    docs = extractDocuments(html);
+  } catch (err) {
+    console.error(`[WRC Documents] Erreur lors du parsing de la page Sportity (${rally.rally}) :`, err.message);
+    return;
+  }
+
+  console.log(`[WRC Documents] ${docs.length} document(s) trouvé(s) pour ${rally.rally}`);
+
+  const newDocs = docs.filter((d) => !knownLinks.includes(d.url));
+  if (newDocs.length === 0) return;
+
+  const channel = await client.channels.fetch(config.channelId).catch(() => null);
+  if (!channel) {
+    console.warn(`[WRC Documents] Salon introuvable (ID: ${config.channelId})`);
+    return;
+  }
+
+  const failedUrls = new Set();
+  for (const doc of newDocs.reverse()) {
+    try {
+      await postDocument(channel, doc, rally.rally);
+    } catch (err) {
+      console.error(`[WRC Documents] Erreur lors de l'envoi de "${doc.title}" :`, err.message);
+      failedUrls.add(doc.url);
+    }
+  }
+
+  // Comme pour la FIA : on ne marque pas comme "vus" les docs dont l'envoi
+  // a échoué, pour qu'ils soient retentés au prochain check.
+  const successfulUrls = docs.map((d) => d.url).filter((url) => !failedUrls.has(url));
+  seen[seenKey] = trim([...knownLinks, ...successfulUrls], 300);
+  saveSeen(seen);
+  console.log(
+    `[WRC Documents] ${newDocs.length - failedUrls.size} nouveau(x) document(s) posté(s) pour ${rally.rally}`
+  );
+}
+
+module.exports = { checkWrcDocs };
+module.exports.postDocument = postDocument;
