@@ -89,6 +89,7 @@ module.exports = [
     feedUrls: [
       "https://toyota-racing-newsroom.com/rss/wrc.rss",
       "https://politepaul.com/fd/oMmn3ed9e34R.xml",
+      "https://news.google.com/rss/search?q=Toyota%20WRC&hl=en-US&gl=US&ceid=US%3Aen",
     ],
   },
   {
@@ -97,6 +98,7 @@ module.exports = [
     channelId: "1468619813415813201",
     feedUrls: [
       "https://politepaul.com/fd/EkrHAwd6VycR.xml",
+      "https://news.google.com/rss/search?q=Hyundai%20WRC&hl=en-US&gl=US&ceid=US%3Aen",
     ],
   },
   {
@@ -105,6 +107,7 @@ module.exports = [
     channelId: "1468619906055409675",
     feedUrls: [
       "https://politepaul.com/fd/yjYQuN3EpZgw.xml",
+      "https://news.google.com/rss/search?q=M%20Sport%20WRC&hl=en-US&gl=US&ceid=US%3Aen",
     ],
   },
 ];
