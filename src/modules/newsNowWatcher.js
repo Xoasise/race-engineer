@@ -2,6 +2,7 @@ const cheerio = require("cheerio");
 const { EmbedBuilder } = require("discord.js");
 const sources = require("../config/newsNowSources");
 const { loadSeen, saveSeen, trim } = require("../utils/seenStore");
+const { buildTranslateRow } = require("../utils/newsButtons");
 
 // NewsNow rend son HTML côté serveur, donc un simple fetch + cheerio suffit
 // (pas besoin de navigateur headless). Un User-Agent "navigateur" reste
@@ -85,8 +86,8 @@ async function checkNewsNowSources(client) {
 
         if (item.image) embed.setImage(item.image);
 
-        try {
-          await channel.send({ embeds: [embed] });
+                try {
+          await channel.send({ embeds: [embed], components: [buildTranslateRow()] });
         } catch (err) {
           console.error(`[${source.name}] Erreur lors de l'envoi de "${item.title}" :`, err.message);
         }
