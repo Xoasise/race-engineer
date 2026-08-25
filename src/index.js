@@ -16,6 +16,7 @@ const fiaDocsConfig = require("./config/fiaDocs");
 const { checkAllFeedsHealth } = require("./utils/feedHealthCheck");
 const { checkF1SessionReminders, startReminderLoop } = require("./modules/f1SessionReminder");
 const { initErrorLogger } = require("./utils/discordErrorLogger");
+const { handleInteraction } = require("./handlers/translateInteraction");
 const { checkWrcDocs } = require("./modules/wrcDocsWatcher");
 const { checkWrcStageReminders, startStageReminderLoop } = require("./modules/wrcStageReminder");
 
@@ -43,6 +44,8 @@ const client = new Client({
 client.on("error", (err) => {
   console.error("❌ Erreur Discord Client (non fatale) :", err.message);
 });
+
+client.on("interactionCreate", handleInteraction);
 
 process.on("unhandledRejection", (err) => {
   console.error("❌ Promesse rejetée non gérée (non fatale) :", err);
