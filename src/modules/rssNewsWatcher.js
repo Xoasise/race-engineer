@@ -2,6 +2,7 @@ const Parser = require("rss-parser");
 const { EmbedBuilder } = require("discord.js");
 const categories = require("../config/newsFeeds");
 const { loadSeen, saveSeen, trim, normalizeLink } = require("../utils/seenStore");
+const { buildTranslateRow } = require("../utils/newsButtons");
 
 
 // Certains sites (Autosport, Motorsport...) renvoient une erreur 403 sans
@@ -126,8 +127,8 @@ async function checkNewsFeeds(client) {
       if (description) embed.setDescription(description);
       if (image) embed.setImage(image);
 
-      try {
-        await channel.send({ embeds: [embed] });
+            try {
+        await channel.send({ embeds: [embed], components: [buildTranslateRow()] });
       } catch (err) {
         // On ne laisse jamais l'échec d'un seul article faire planter
         // tout le bot : on log et on continue avec les suivants.
