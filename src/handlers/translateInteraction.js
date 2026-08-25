@@ -1,6 +1,7 @@
 const { TRANSLATE_BUTTON_ID } = require("../utils/newsButtons");
 const { translateText } = require("../utils/translate");
 const { localeToGoogleLang } = require("../utils/discordLocales");
+const { MessageFlags } = require("discord.js");
 
 const COOLDOWN_MS = 30_000; // 30 secondes entre deux traductions pour un même membre
 
@@ -25,15 +26,15 @@ async function handleTranslateButton(interaction) {
   const remaining = getRemainingCooldownSeconds(interaction.user.id);
   if (remaining > 0) {
     await interaction.reply({
-      content: `⏳ Attends encore ${remaining}s avant de retraduire un article.`,
-      ephemeral: true,
-    });
+  content: `⏳ Attends encore ${remaining}s avant de retraduire un article.`,
+  flags: MessageFlags.Ephemeral,
+});
     return;
   }
 
   lastUsedAt.set(interaction.user.id, Date.now());
 
-  await interaction.deferReply({ ephemeral: true });
+  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
   const embed = interaction.message.embeds?.[0];
   if (!embed) {
