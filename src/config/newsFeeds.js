@@ -23,7 +23,6 @@ module.exports = [
       "https://rss.rtbf.be/article/rss/highlight_rtbf_sport-moteurs-formule-1.xml?source=internal",
       "https://rmcsport.bfmtv.com/rss/auto-moto/f1/",
       "https://www.f1actu.com/feed/",
-      "https://www.f1-fansite.com/feed/",
     ],
   },
   {
@@ -50,6 +49,7 @@ module.exports = [
       "https://www.thef1spectator.com/feed/",
       "https://www.crash.net/rss/f1",
       "https://www.reddit.com/r/formula1/.rss",
+      "https://www.f1-fansite.com/feed/",
     ],
   },
   {
