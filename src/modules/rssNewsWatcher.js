@@ -17,6 +17,12 @@ const parser = new Parser({
   },
 });
 
+const GOOGLE_NEWS_MAX_AGE_MS = 48 * 60 * 60 * 1000; // 48h
+
+function isGoogleNewsUrl(url) {
+  return /news\.google\.com/i.test(url);
+}
+
 function stripHtml(text) {
   if (!text) return text;
   return text
@@ -64,7 +70,8 @@ async function checkNewsFeeds(client) {
     for (const feedUrl of category.feedUrls) {
       try {
         const feed = await parser.parseURL(feedUrl);
-        merged.push(...feed.items);
+                const isGN = isGoogleNewsUrl(feedUrl);
+        merged.push(...feed.items.map((item) => ({ ...item, __isGoogleNews: isGN })));
       } catch (err) {
         console.error(`[${category.name}] Erreur lors du fetch de ${feedUrl} :`, err.message);
       }
@@ -80,13 +87,25 @@ async function checkNewsFeeds(client) {
       const key = normalizeLink(item.link);
       if (key && !uniqueByLink.has(key)) uniqueByLink.set(key, { ...item, link: key });
     }
-    const sorted = [...uniqueByLink.values()].sort((a, b) => {
+        const sorted = [...uniqueByLink.values()].sort((a, b) => {
       const dateA = a.pubDate ? new Date(a.pubDate).getTime() : 0;
       const dateB = b.pubDate ? new Date(b.pubDate).getTime() : 0;
       return dateA - dateB;
     });
 
-    const newItems = sorted.filter((item) => !knownLinks.includes(item.link));
+    // Les flux Google News (news.google.com) ne garantissent ni fraîcheur ni
+    // stabilité de leurs liens (le token d'URL peut changer pour un même
+    // article) : un vieil article peut donc reposer comme "nouveau" en boucle.
+    // On les filtre par date de publication pour ne jamais poster/enregistrer
+    // un item trop ancien.
+    const now = Date.now();
+    const filtered = sorted.filter((item) => {
+      if (!item.__isGoogleNews) return true;
+      const pubTime = item.pubDate ? new Date(item.pubDate).getTime() : 0;
+      return pubTime > 0 && now - pubTime <= GOOGLE_NEWS_MAX_AGE_MS;
+    });
+
+    const newItems = filtered.filter((item) => !knownLinks.includes(item.link));
 
     console.log(
       `[${category.name}] ${sorted.length} article(s) au total (tous flux confondus), ${newItems.length} nouveau(x)`
