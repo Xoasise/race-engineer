@@ -6,7 +6,7 @@ if (typeof globalThis.File === "undefined") {
   const { File } = require("node:buffer");
   globalThis.File = File;
 }
-const { Client, GatewayIntentBits } = require("discord.js");
+const { Client, GatewayIntentBits, Options } = require("discord.js");
 const { EmbedBuilder } = require("discord.js");
 const cron = require("node-cron");
 const { checkNewsNowSources } = require("./modules/newsNowWatcher");
@@ -33,6 +33,12 @@ http
 
 const client = new Client({
   intents: [GatewayIntentBits.Guilds],
+  makeCache: Options.cacheWithLimits({
+    MessageManager: 0,
+    PresenceManager: 0,
+    GuildMemberManager: 0,
+    UserManager: 0,
+  }),
 });
 
 // Filet de sécurité : un événement 'error' non catché sur le Client (ex:
