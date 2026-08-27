@@ -54,4 +54,4 @@ function getCurrentRound(now = new Date()) {
   }) || null;
 }
 
-module.exports = { getRounds };
+module.exports = { getRounds, getCurrentRound };
