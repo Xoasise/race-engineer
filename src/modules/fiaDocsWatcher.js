@@ -72,25 +72,6 @@ function extractDocuments(html) {
 }
 
 
-// Envoie un document : un embed d'info (titre + lien) suivi des pages du
-// PDF sous forme d'images, en pièces jointes (par lots de 10 max).
-async function sendImageBatch(channel, doc, batch, batchIndex) {
-  const startIndex = batchIndex * MAX_FILES_PER_MESSAGE;
-
-  const files = batch.map((imgBuffer, i) =>
-    new AttachmentBuilder(imgBuffer, { name: `page-${startIndex + i + 1}.png` })
-  );
-
-  const embeds = batch.map((_, i) =>
-    new EmbedBuilder()
-      .setURL(doc.url)
-      .setColor(0x1e2a45)
-      .setImage(`attachment://page-${startIndex + i + 1}.png`)
-  );
-
-  await channel.send({ embeds, files });
-}
-
 async function postDocument(channel, doc) {
   const infoEmbed = new EmbedBuilder()
     .setAuthor({ name: `🏁 FIA Documents${doc.eventName ? " • " + doc.eventName : ""}` })
