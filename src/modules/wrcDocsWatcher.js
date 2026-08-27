@@ -112,7 +112,7 @@ async function postDocument(channel, doc, rallyName) {
   try {
     const pdfBuffer = await fetchPdfBuffer(doc.url);
 
-    for await (const { buffer, totalPages: tp } of pdfToImagesStream(pdfBuffer, { scale: 1.5, maxPages: 30 })) {
+    for await (const { buffer, totalPages: tp } of pdfToImagesStream(pdfBuffer, { scale: 2, maxPages: 30 })) {
       totalPages = tp;
       pagesRendered++;
       batch.push(buffer);
