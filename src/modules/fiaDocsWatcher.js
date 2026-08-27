@@ -1,7 +1,7 @@
 const { EmbedBuilder, AttachmentBuilder } = require("discord.js");
 const cheerio = require("cheerio");
 const { loadSeen, saveSeen, trim } = require("../utils/seenStore");
-const { pdfToImagesStream } = require("../utils/pdfToImages");
+const { pdfToImages } = require("../utils/pdfToImages");
 const config = require("../config/fiaDocs");
 const { getCurrentRound } = require("../utils/f1CalendarLocal");
 
@@ -9,6 +9,12 @@ const CATEGORY_KEY = "FIA Documents";
 const MAX_FILES_PER_MESSAGE = 10; // limite Discord
 const CLASSIFICATION_CHANNEL_ID = "725345981410836490"; // salon dédié aux classements
 const STANDINGS_CHANNEL_ID = "1376589535495983207"; // salon dédié au championnat
+
+function chunk(array, size) {
+  const chunks = [];
+  for (let i = 0; i < array.length; i += size) chunks.push(array.slice(i, i + size));
+  return chunks;
+}
 
 async function fetchHtml(url) {
   const res = await fetch(url, {
@@ -93,50 +99,51 @@ async function postDocument(channel, doc) {
     .setColor(0x1e2a45)
     .setFooter({ text: doc.published ? `Publié le ${doc.published}` : "FIA" });
 
-  let batch = [];
-  let batchIndex = 0;
-  let pagesRendered = 0;
+  let images = [];
   let totalPages = 0;
-
   try {
     const pdfBuffer = await fetchPdfBuffer(doc.url);
-
-    for await (const { buffer, totalPages: tp } of pdfToImagesStream(pdfBuffer, { scale: 2, maxPages: 30 })) {
-      totalPages = tp;
-      pagesRendered++;
-      batch.push(buffer);
-
-      if (batch.length === MAX_FILES_PER_MESSAGE) {
-        if (pagesRendered === batch.length) {
-          // premier lot : on envoie d'abord l'embed d'info seul
-          await channel.send({ embeds: [infoEmbed] });
-        }
-        await sendImageBatch(channel, doc, batch, batchIndex);
-        batchIndex++;
-        batch = [];
-      }
-    }
+    const result = await pdfToImages(pdfBuffer, { scale: 2, maxPages: 30 });
+    images = result.images;
+    totalPages = result.totalPages;
   } catch (err) {
     console.error(`[FIA Documents] Erreur de conversion PDF pour "${doc.title}" :`, err.message);
   }
 
-  if (pagesRendered === 0) {
-    // Fallback : aucune page rendue, on envoie juste l'embed avec le lien.
+  if (images.length === 0) {
+    // Fallback : pas d'image dispo, on envoie juste l'embed avec le lien.
     await channel.send({ embeds: [infoEmbed] });
     return;
   }
 
-  if (batch.length > 0) {
-    if (batchIndex === 0) {
-      // le tout premier (et unique) lot : embed d'info avant
-      await channel.send({ embeds: [infoEmbed] });
-    }
-    await sendImageBatch(channel, doc, batch, batchIndex);
+  // L'embed d'info part dans son propre message : ça évite de dépasser la
+  // limite Discord de 10 embeds/message quand le premier lot d'images est
+  // déjà plein (10 images + 1 info = 11, refusé par Discord).
+  await channel.send({ embeds: [infoEmbed] });
+
+  const batches = chunk(images, MAX_FILES_PER_MESSAGE);
+
+  for (let b = 0; b < batches.length; b++) {
+    const batch = batches[b];
+    const startIndex = b * MAX_FILES_PER_MESSAGE;
+
+    const files = batch.map((imgBuffer, i) =>
+      new AttachmentBuilder(imgBuffer, { name: `page-${startIndex + i + 1}.png` })
+    );
+
+    const embeds = batch.map((_, i) =>
+      new EmbedBuilder()
+        .setURL(doc.url) // même URL sur chaque embed pour les regrouper en galerie
+        .setColor(0x1e2a45)
+        .setImage(`attachment://page-${startIndex + i + 1}.png`)
+    );
+
+    await channel.send({ embeds, files });
   }
 
-  if (totalPages > pagesRendered) {
+  if (totalPages > images.length) {
     console.warn(
-      `[FIA Documents] "${doc.title}" a ${totalPages} pages, seules les ${pagesRendered} premières ont été postées`
+      `[FIA Documents] "${doc.title}" a ${totalPages} pages, seules les ${images.length} premières ont été postées`
     );
   }
 }
