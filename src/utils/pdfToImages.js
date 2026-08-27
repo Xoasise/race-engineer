@@ -31,4 +31,4 @@ async function* pdfToImagesStream(pdfBuffer, { scale = 1.5, maxPages = 10 } = {}
   await doc.destroy();
 }
 
-module.exports = { pdfToImages, pdfToImagesStream };
+module.exports = { pdfToImagesStream };
