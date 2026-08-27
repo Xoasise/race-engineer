@@ -24,7 +24,7 @@ async function* pdfToImagesStream(pdfBuffer, { scale = 2, maxPages = 10 } = {}) 
     const canvas = createCanvas(viewport.width, viewport.height);
     const context = canvas.getContext("2d");
     await page.render({ canvasContext: context, viewport }).promise;
-    const buffer = canvas.toBuffer("image/jpeg", 0.82);
+    const buffer = canvas.toBuffer("image/png");
     page.cleanup();
     yield { buffer, pageNum, totalPages };
   }
