@@ -38,20 +38,22 @@ function stripHtml(text) {
 // endroits très différents selon le site. On teste les emplacements les
 // plus courants dans l'ordre, et on retombe sur "pas d'image" sinon.
 function extractImage(item) {
-  if (item.enclosure?.url) return item.enclosure.url;
+  const isAbsoluteUrl = (url) => /^https?:\/\//i.test(url);
+
+  if (item.enclosure?.url && isAbsoluteUrl(item.enclosure.url)) return item.enclosure.url;
 
   if (item.mediaContent) {
     const arr = Array.isArray(item.mediaContent) ? item.mediaContent : [item.mediaContent];
-    const withUrl = arr.find((m) => m?.$?.url);
+    const withUrl = arr.find((m) => m?.$?.url && isAbsoluteUrl(m.$.url));
     if (withUrl) return withUrl.$.url;
   }
 
-  if (item.mediaThumbnail?.$?.url) return item.mediaThumbnail.$.url;
+  if (item.mediaThumbnail?.$?.url && isAbsoluteUrl(item.mediaThumbnail.$.url)) return item.mediaThumbnail.$.url;
 
   const html = item["content:encoded"] || item.content || item.contentSnippet;
   if (typeof html === "string") {
     const match = html.match(/<img[^>]+src="([^">]+)"/i);
-    if (match) return match[1];
+    if (match && isAbsoluteUrl(match[1])) return match[1];
   }
 
   return null;
@@ -144,9 +146,9 @@ async function checkNewsFeeds(client) {
         .setTimestamp(item.pubDate ? new Date(item.pubDate) : new Date());
 
       if (description) embed.setDescription(description);
-      if (image) embed.setImage(image);
 
             try {
+        if (image) embed.setImage(image);
         await channel.send({ embeds: [embed], components: [buildTranslateRow()] });
       } catch (err) {
         // On ne laisse jamais l'échec d'un seul article faire planter
