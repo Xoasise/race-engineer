@@ -3,6 +3,7 @@ const cheerio = require("cheerio");
 const { loadSeen, saveSeen, trim } = require("../utils/seenStore");
 const { pdfToImagesStream } = require("../utils/pdfToImages");
 const config = require("../config/fiaDocs");
+const { getCurrentRound } = require("../utils/f1CalendarLocal");
 
 const CATEGORY_KEY = "FIA Documents";
 const MAX_FILES_PER_MESSAGE = 10; // limite Discord
@@ -143,6 +144,13 @@ async function postDocument(channel, doc) {
 async function checkFiaDocs(client) {
   if (!config.channelId) {
     console.warn("[FIA Documents] FIA_DOCS_CHANNEL_ID non défini, watcher désactivé");
+    return;
+  }
+
+  const round = getCurrentRound();
+  if (!round) {
+    // Pas de weekend de Grand Prix en cours (±24h) : on évite le fetch +
+    // parsing de la page FIA à chaque cycle pour rien.
     return;
   }
 
