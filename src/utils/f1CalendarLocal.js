@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const SAFETY_BUFFER_MS = 24 * 60 * 60 * 1000; // 24h avant/après
 
 const CALENDAR_FILE = path.join(__dirname, "..", "config", "f1Calendar2026.json");
 
@@ -39,6 +40,18 @@ function getRounds() {
   }
 
   return rounds.sort((a, b) => a.weekendStart - b.weekendStart);
+}
+
+// Retourne le round dont la fenêtre (avec marge) contient l'instant donné,
+// ou null si on est entre deux weekends (le watcher ne fait alors aucune
+// requête réseau). Même principe que getCurrentRally() dans wrcCalendarLocal.js.
+function getCurrentRound(now = new Date()) {
+  const rounds = getRounds();
+  return rounds.find((r) => {
+    const start = new Date(r.weekendStart.getTime() - SAFETY_BUFFER_MS);
+    const end = new Date(r.weekendEnd.getTime() + SAFETY_BUFFER_MS);
+    return now >= start && now <= end;
+  }) || null;
 }
 
 module.exports = { getRounds };
