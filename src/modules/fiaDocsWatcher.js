@@ -1,7 +1,7 @@
 const { EmbedBuilder, AttachmentBuilder } = require("discord.js");
 const cheerio = require("cheerio");
 const { loadSeen, saveSeen, trim } = require("../utils/seenStore");
-const { pdfToImages } = require("../utils/pdfToImages");
+const { pdfToImagesStream } = require("../utils/pdfToImages");
 const config = require("../config/fiaDocs");
 
 const CATEGORY_KEY = "FIA Documents";
@@ -64,14 +64,26 @@ function extractDocuments(html) {
   return docs;
 }
 
-function chunk(array, size) {
-  const chunks = [];
-  for (let i = 0; i < array.length; i += size) chunks.push(array.slice(i, i + size));
-  return chunks;
-}
 
 // Envoie un document : un embed d'info (titre + lien) suivi des pages du
 // PDF sous forme d'images, en pièces jointes (par lots de 10 max).
+async function sendImageBatch(channel, doc, batch, batchIndex) {
+  const startIndex = batchIndex * MAX_FILES_PER_MESSAGE;
+
+  const files = batch.map((imgBuffer, i) =>
+    new AttachmentBuilder(imgBuffer, { name: `page-${startIndex + i + 1}.png` })
+  );
+
+  const embeds = batch.map((_, i) =>
+    new EmbedBuilder()
+      .setURL(doc.url)
+      .setColor(0x1e2a45)
+      .setImage(`attachment://page-${startIndex + i + 1}.png`)
+  );
+
+  await channel.send({ embeds, files });
+}
+
 async function postDocument(channel, doc) {
   const infoEmbed = new EmbedBuilder()
     .setAuthor({ name: `🏁 FIA Documents${doc.eventName ? " • " + doc.eventName : ""}` })
@@ -80,51 +92,50 @@ async function postDocument(channel, doc) {
     .setColor(0x1e2a45)
     .setFooter({ text: doc.published ? `Publié le ${doc.published}` : "FIA" });
 
-  let images = [];
+  let batch = [];
+  let batchIndex = 0;
+  let pagesRendered = 0;
   let totalPages = 0;
+
   try {
     const pdfBuffer = await fetchPdfBuffer(doc.url);
-    const result = await pdfToImages(pdfBuffer, { scale: 2, maxPages: 30 });
-    images = result.images;
-    totalPages = result.totalPages;
+
+    for await (const { buffer, totalPages: tp } of pdfToImagesStream(pdfBuffer, { scale: 1.5, maxPages: 30 })) {
+      totalPages = tp;
+      pagesRendered++;
+      batch.push(buffer);
+
+      if (batch.length === MAX_FILES_PER_MESSAGE) {
+        if (pagesRendered === batch.length) {
+          // premier lot : on envoie d'abord l'embed d'info seul
+          await channel.send({ embeds: [infoEmbed] });
+        }
+        await sendImageBatch(channel, doc, batch, batchIndex);
+        batchIndex++;
+        batch = [];
+      }
+    }
   } catch (err) {
     console.error(`[FIA Documents] Erreur de conversion PDF pour "${doc.title}" :`, err.message);
   }
 
-  if (images.length === 0) {
-    // Fallback : pas d'image dispo, on envoie juste l'embed avec le lien.
+  if (pagesRendered === 0) {
+    // Fallback : aucune page rendue, on envoie juste l'embed avec le lien.
     await channel.send({ embeds: [infoEmbed] });
     return;
   }
 
-  // L'embed d'info part dans son propre message : ça évite de dépasser la
-  // limite Discord de 10 embeds/message quand le premier lot d'images est
-  // déjà plein (10 images + 1 info = 11, refusé par Discord).
-  await channel.send({ embeds: [infoEmbed] });
-
-  const batches = chunk(images, MAX_FILES_PER_MESSAGE);
-
-  for (let b = 0; b < batches.length; b++) {
-    const batch = batches[b];
-    const startIndex = b * MAX_FILES_PER_MESSAGE;
-
-    const files = batch.map((imgBuffer, i) =>
-      new AttachmentBuilder(imgBuffer, { name: `page-${startIndex + i + 1}.png` })
-    );
-
-    const embeds = batch.map((_, i) =>
-      new EmbedBuilder()
-        .setURL(doc.url) // même URL sur chaque embed pour les regrouper en galerie
-        .setColor(0x1e2a45)
-        .setImage(`attachment://page-${startIndex + i + 1}.png`)
-    );
-
-    await channel.send({ embeds, files });
+  if (batch.length > 0) {
+    if (batchIndex === 0) {
+      // le tout premier (et unique) lot : embed d'info avant
+      await channel.send({ embeds: [infoEmbed] });
+    }
+    await sendImageBatch(channel, doc, batch, batchIndex);
   }
 
-  if (totalPages > images.length) {
+  if (totalPages > pagesRendered) {
     console.warn(
-      `[FIA Documents] "${doc.title}" a ${totalPages} pages, seules les ${images.length} premières ont été postées`
+      `[FIA Documents] "${doc.title}" a ${totalPages} pages, seules les ${pagesRendered} premières ont été postées`
     );
   }
 }
