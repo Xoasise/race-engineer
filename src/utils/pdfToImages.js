@@ -11,7 +11,7 @@ function loadPdfjsLib() {
 }
 
 // Convertit un PDF (Buffer) en tableau de Buffers PNG, une image par page.
-async function* pdfToImagesStream(pdfBuffer, { scale = 1.5, maxPages = 10 } = {}) {
+async function* pdfToImagesStream(pdfBuffer, { scale = 2, maxPages = 10 } = {}) {
   const pdfjsLib = await loadPdfjsLib();
   const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(pdfBuffer) });
   const doc = await loadingTask.promise;
