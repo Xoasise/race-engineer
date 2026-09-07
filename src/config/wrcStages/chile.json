@@ -1,0 +1,121 @@
+[
+  {
+    "numero": "Shakedown 1",
+    "nom": "Shakedown (San José de Palco)",
+    "distance_km": 5.76,
+    "heure": "11:00",
+    "date": "2026-09-10"
+  },
+  {
+    "numero": "SS 1",
+    "nom": "Turquía 1",
+    "distance_km": 22.94,
+    "heure": "08:53",
+    "date": "2026-09-11"
+  },
+  {
+    "numero": "SS 2",
+    "nom": "Nuevo Rere 1",
+    "distance_km": 10.76,
+    "heure": "09:48",
+    "date": "2026-09-11"
+  },
+  {
+    "numero": "SS 3",
+    "nom": "Hualqui 1",
+    "distance_km": 16.69,
+    "heure": "10:36",
+    "date": "2026-09-11"
+  },
+  {
+    "numero": "SS 4",
+    "nom": "Turquía 2",
+    "distance_km": 22.94,
+    "heure": "15:09",
+    "date": "2026-09-11"
+  },
+  {
+    "numero": "SS 5",
+    "nom": "Nuevo Rere 2",
+    "distance_km": 10.76,
+    "heure": "16:04",
+    "date": "2026-09-11"
+  },
+  {
+    "numero": "SS 6",
+    "nom": "Hualqui 2",
+    "distance_km": 16.69,
+    "heure": "16:52",
+    "date": "2026-09-11"
+  },
+  {
+    "numero": "SS 7",
+    "nom": "Pelún 1",
+    "distance_km": 15.65,
+    "heure": "09:08",
+    "date": "2026-09-12"
+  },
+  {
+    "numero": "SS 8",
+    "nom": "Lota 1",
+    "distance_km": 25.64,
+    "heure": "10:01",
+    "date": "2026-09-12"
+  },
+  {
+    "numero": "SS 9",
+    "nom": "María las Cruces 1",
+    "distance_km": 28.31,
+    "heure": "11:05",
+    "date": "2026-09-12"
+  },
+  {
+    "numero": "SS 10",
+    "nom": "Pelún 2",
+    "distance_km": 15.65,
+    "heure": "15:08",
+    "date": "2026-09-12"
+  },
+  {
+    "numero": "SS 11",
+    "nom": "Lota 2",
+    "distance_km": 25.64,
+    "heure": "16:01",
+    "date": "2026-09-12"
+  },
+  {
+    "numero": "SS 12",
+    "nom": "María las Cruces 2",
+    "distance_km": 28.31,
+    "heure": "17:05",
+    "date": "2026-09-12"
+  },
+  {
+    "numero": "SS 13",
+    "nom": "Carampangue 1",
+    "distance_km": 26.82,
+    "heure": "09:00",
+    "date": "2026-09-13"
+  },
+  {
+    "numero": "SS 14",
+    "nom": "BioBío 1",
+    "distance_km": 8.78,
+    "heure": "10:05",
+    "date": "2026-09-13"
+  },
+  {
+    "numero": "SS 15",
+    "nom": "Carampangue 2",
+    "distance_km": 26.82,
+    "heure": "11:13",
+    "date": "2026-09-13"
+  },
+  {
+    "numero": "SS 16",
+    "nom": "BioBío 2 [Power Stage]",
+    "distance_km": 8.78,
+    "heure": "13:15",
+    "date": "2026-09-13"
+  }
+]
