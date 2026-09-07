@@ -15,4 +15,5 @@
 
 module.exports = {
   "🇵🇾 WRC ueno Rally del Paraguay": "paraguay.json",
+  "🇨🇱 WRC Rally Chile Bio Bío": "chile.json",
 };
