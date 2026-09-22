@@ -1,0 +1,142 @@
+[
+  {
+    "numero": "Shakedown 1",
+    "nom": "Shakedown (Monte Baranta)",
+    "distance_km": 3.27,
+    "heure": "09:01",
+    "date": "2026-10-01"
+  },
+  {
+    "numero": "Shakedown 2",
+    "nom": "Shakedown (Monte Baranta)",
+    "distance_km": 3.27,
+    "heure": "11:01",
+    "date": "2026-10-01"
+  },
+  {
+    "numero": "Shakedown 3",
+    "nom": "Shakedown (Monte Baranta)",
+    "distance_km": 3.27,
+    "heure": "12:01",
+    "date": "2026-10-01"
+  },
+  {
+    "numero": "SSS 1",
+    "nom": "Ittiri Arena Show",
+    "distance_km": "?.??",
+    "heure": "16:05",
+    "date": "2026-10-01"
+  },
+  {
+    "numero": "SS 2",
+    "nom": "Tula - Erula 1",
+    "distance_km": 18.77,
+    "heure": "08:01",
+    "date": "2026-10-02"
+  },
+  {
+    "numero": "SS 3",
+    "nom": "Su Filigosu - Lerno 1",
+    "distance_km": 17.83,
+    "heure": "09:01",
+    "date": "2026-10-02"
+  },
+  {
+    "numero": "SS 4",
+    "nom": "Monti die Alà - Sa Conchedda - Lerno 1",
+    "distance_km": 23.23,
+    "heure": "10:08",
+    "date": "2026-10-02"
+  },
+  {
+    "numero": "SS 5",
+    "nom": "Tula - Erula 2",
+    "distance_km": 18.77,
+    "heure": "14:31",
+    "date": "2026-10-02"
+  },
+  {
+    "numero": "SS 6",
+    "nom": "Su Filigosu - Lerno 2",
+    "distance_km": 17.83,
+    "heure": "15:31",
+    "date": "2026-10-02"
+  },
+  {
+    "numero": "SS 7",
+    "nom": "Monti die Alà - Sa Conchedda - Lerno 2",
+    "distance_km": 23.23,
+    "heure": "16:38",
+    "date": "2026-10-02"
+  },
+  {
+    "numero": "SS 8",
+    "nom": "Lerno - Monti di Alá 1",
+    "distance_km": 24.14,
+    "heure": "08:01",
+    "date": "2026-10-03"
+  },
+  {
+    "numero": "SS 9",
+    "nom": "Coiluna - Loelle 1",
+    "distance_km": 24.83,
+    "heure": "09:11",
+    "date": "2026-10-03"
+  },
+  {
+    "numero": "SS 10",
+    "nom": "Solorche 1",
+    "distance_km": 12.86,
+    "heure": "10:07",
+    "date": "2026-10-03"
+  },
+  {
+    "numero": "SS 11",
+    "nom": "Lerno - Monti di Alá 2",
+    "distance_km": 24.14,
+    "heure": "14:31",
+    "date": "2026-10-03"
+  },
+  {
+    "numero": "SS 12",
+    "nom": "Coiluna - Loelle 2",
+    "distance_km": 24.83,
+    "heure": "15:41",
+    "date": "2026-10-03"
+  },
+  {
+    "numero": "SS 13",
+    "nom": "Solorche 2",
+    "distance_km": 12.86,
+    "heure": "16:37",
+    "date": "2026-10-03"
+  },
+  {
+    "numero": "SS 14",
+    "nom": "Osilo - Tergu 1",
+    "distance_km": 23.71,
+    "heure": "08:31",
+    "date": "2026-10-04"
+  },
+  {
+    "numero": "SS 15",
+    "nom": "Sassari - Argentiera 1",
+    "distance_km": 7.1,
+    "heure": "10:05",
+    "date": "2026-10-04"
+  },
+  {
+    "numero": "SS 16",
+    "nom": "Osilo - Tergu 2",
+    "distance_km": 23.71,
+    "heure": "11:38",
+    "date": "2026-10-04"
+  },
+  {
+    "numero": "SS 17",
+    "nom": "Sassari - Argentiera 2 [Power Stage]",
+    "distance_km": 7.1,
+    "heure": "14:15",
+    "date": "2026-10-04"
+  }
+]
