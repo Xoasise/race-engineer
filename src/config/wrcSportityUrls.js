@@ -16,4 +16,6 @@ module.exports = {
     "https://webapp.sportity.com/event/WRCPAR26/d724b1d8-2f75-4348-a79f-048272b74601",
   "🇨🇱 WRC Rally Chile Bio Bío":
     "https://webapp.sportity.com/event/WRCCHI26/7eb025e3-7153-4624-90aa-e5119b0fe54c",
+  "🇮🇹 WRC Rally Italia Sardegna":
+    "https://webapp.sportity.com/event/WRCITA26/3b54b065-1c5a-4252-96a4-f090551c5517",
 };
